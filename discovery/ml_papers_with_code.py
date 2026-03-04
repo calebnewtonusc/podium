@@ -28,6 +28,7 @@ try:
     from loguru import logger
 except ImportError:
     import logging
+
     logger = logging.getLogger(__name__)
     logging.basicConfig(level=logging.INFO)
 
@@ -58,7 +59,6 @@ TASK_TO_DOMAIN = {
     "medical-image-segmentation": "cv",
     "document-classification": "cv",
     "scene-recognition": "cv",
-
     # NLP
     "text-classification": "nlp",
     "sentiment-analysis": "nlp",
@@ -72,19 +72,16 @@ TASK_TO_DOMAIN = {
     "text-summarization": "nlp",
     "coreference-resolution": "nlp",
     "information-extraction": "nlp",
-
     # Tabular / Structured
     "regression": "tabular",
     "classification": "tabular",
     "tabular-data-binary-classification": "tabular",
     "anomaly-detection": "tabular",
     "fraud-detection": "tabular",
-
     # Time Series
     "time-series-forecasting": "time_series",
     "time-series-classification": "time_series",
     "traffic-prediction": "time_series",
-
     # Audio
     "speech-recognition": "nlp",
     "audio-classification": "other",
@@ -99,7 +96,6 @@ HIGH_VALUE_METHODS = [
     "lightgbm",
     "catboost",
     "random-forests",
-
     # Deep Learning Architectures
     "vision-transformer-vit",
     "resnet",
@@ -111,7 +107,6 @@ HIGH_VALUE_METHODS = [
     "unet",
     "yolo",
     "detr",
-
     # Training Techniques
     "transfer-learning",
     "data-augmentation",
@@ -123,7 +118,6 @@ HIGH_VALUE_METHODS = [
     "knowledge-distillation",
     "self-supervised-learning",
     "semi-supervised-learning",
-
     # Ensemble
     "ensemble-learning",
     "stacking",
@@ -139,10 +133,13 @@ def pwc_get(endpoint: str, params: dict = None) -> dict:
     url = f"{PWC_BASE}/{endpoint}"
     if params:
         url += "?" + urllib.parse.urlencode(params)
-    req = urllib.request.Request(url, headers={
-        "User-Agent": "nalana-dataset-harvester/1.0",
-        "Accept": "application/json",
-    })
+    req = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": "nalana-dataset-harvester/1.0",
+            "Accept": "application/json",
+        },
+    )
     try:
         with urllib.request.urlopen(req, timeout=20) as resp:
             return json.loads(resp.read())
@@ -161,7 +158,9 @@ def fetch_all_methods(max_pages: int = 100) -> list[dict]:
         if not results:
             break
         methods.extend(results)
-        logger.info(f"Methods page {page}: {len(results)} items (total: {len(methods)})")
+        logger.info(
+            f"Methods page {page}: {len(results)} items (total: {len(methods)})"
+        )
         if not data.get("next"):
             break
         page += 1
@@ -174,7 +173,9 @@ def fetch_task_results(task_slug: str, max_pages: int = 20) -> list[dict]:
     results = []
     page = 1
     while page <= max_pages:
-        data = pwc_get(f"tasks/{task_slug}/results/", {"page": page, "items_per_page": 100})
+        data = pwc_get(
+            f"tasks/{task_slug}/results/", {"page": page, "items_per_page": 100}
+        )
         batch = data.get("results", [])
         if not batch:
             break
@@ -188,7 +189,9 @@ def fetch_task_results(task_slug: str, max_pages: int = 20) -> list[dict]:
 
 def fetch_method_implementations(method_id: str, max_results: int = 50) -> list[dict]:
     """Fetch GitHub repo implementations for a method."""
-    data = pwc_get(f"methods/{method_id}/repositories/", {"items_per_page": max_results})
+    data = pwc_get(
+        f"methods/{method_id}/repositories/", {"items_per_page": max_results}
+    )
     return data.get("results", [])
 
 
@@ -251,9 +254,15 @@ def build_technique_triple(
         "metric_value": str(metric_value),
         "description": ". ".join(description_parts),
         "method_description": (method.get("description") or "")[:500],
-        "task_name": result.get("task", {}).get("name", "") if isinstance(result.get("task"), dict) else "",
-        "dataset_name": result.get("dataset", {}).get("name", "") if isinstance(result.get("dataset"), dict) else "",
-        "year": (result.get("paper") or {}).get("published", "")[:4] if result.get("paper") else "",
+        "task_name": result.get("task", {}).get("name", "")
+        if isinstance(result.get("task"), dict)
+        else "",
+        "dataset_name": result.get("dataset", {}).get("name", "")
+        if isinstance(result.get("dataset"), dict)
+        else "",
+        "year": (result.get("paper") or {}).get("published", "")[:4]
+        if result.get("paper")
+        else "",
     }
 
 
@@ -276,7 +285,9 @@ def build_method_record(method: dict, repos: list[dict]) -> dict:
             for r in sorted(repos, key=lambda x: x.get("stars", 0), reverse=True)[:5]
         ],
         "categories": method.get("categories", []),
-        "area": method.get("area", {}).get("name", "") if isinstance(method.get("area"), dict) else "",
+        "area": method.get("area", {}).get("name", "")
+        if isinstance(method.get("area"), dict)
+        else "",
     }
 
 
@@ -292,12 +303,19 @@ def main():
         description="Collect ML technique data from Papers With Code"
     )
     parser.add_argument("--all", action="store_true", help="Run all collection modes")
-    parser.add_argument("--methods", action="store_true",
-                        help="Collect all ML methods with implementations")
-    parser.add_argument("--results", action="store_true",
-                        help="Collect SOTA benchmark results (technique triples)")
-    parser.add_argument("--task", type=str, default=None,
-                        help="Specific task slug to fetch results for")
+    parser.add_argument(
+        "--methods",
+        action="store_true",
+        help="Collect all ML methods with implementations",
+    )
+    parser.add_argument(
+        "--results",
+        action="store_true",
+        help="Collect SOTA benchmark results (technique triples)",
+    )
+    parser.add_argument(
+        "--task", type=str, default=None, help="Specific task slug to fetch results for"
+    )
     parser.add_argument("--max-method-pages", type=int, default=50)
     parser.add_argument("--max-task-pages", type=int, default=10)
     args = parser.parse_args()
@@ -324,7 +342,7 @@ def main():
             rec = build_method_record(method, repos)
             method_records.append(rec)
             if (i + 1) % 100 == 0:
-                logger.info(f"Methods processed: {i+1}/{len(all_methods)}")
+                logger.info(f"Methods processed: {i + 1}/{len(all_methods)}")
             time.sleep(0.2)
 
         save_records(method_records, PWC_METHODS_FILE)
@@ -366,9 +384,11 @@ def main():
             time.sleep(0.3)
 
         save_records(all_triples, PWC_RESULTS_FILE)
-        logger.info(f"Saved {len(all_triples)} SOTA result triples to {PWC_RESULTS_FILE}")
+        logger.info(
+            f"Saved {len(all_triples)} SOTA result triples to {PWC_RESULTS_FILE}"
+        )
 
-    logger.info(f"\nNext step: python discovery/solution_writeups_v2.py")
+    logger.info("\nNext step: python discovery/solution_writeups_v2.py")
 
 
 if __name__ == "__main__":

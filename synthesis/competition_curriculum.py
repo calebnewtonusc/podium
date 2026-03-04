@@ -116,10 +116,10 @@ def minhash_signature(text: str, num_hashes: int = 64) -> list[int]:
     Uses a sliding window of 3-grams for better deduplication.
     """
     # Build shingles (3-word n-grams)
-    words = re.sub(r'[^a-zA-Z0-9\s]', '', text.lower()).split()
+    words = re.sub(r"[^a-zA-Z0-9\s]", "", text.lower()).split()
     shingles = set()
     for i in range(len(words) - 2):
-        shingle = " ".join(words[i:i+3])
+        shingle = " ".join(words[i : i + 3])
         shingles.add(shingle)
 
     if not shingles:
@@ -128,7 +128,7 @@ def minhash_signature(text: str, num_hashes: int = 64) -> list[int]:
     # MinHash computation
     signature = []
     for i in range(num_hashes):
-        min_hash = float('inf')
+        min_hash = float("inf")
         for shingle in shingles:
             h = int(hashlib.md5(f"{i}:{shingle}".encode()).hexdigest(), 16)
             if h < min_hash:
@@ -156,12 +156,14 @@ def deduplicate_records(records: list[dict], threshold: float = 0.85) -> list[di
     # Compute signatures
     signatures = []
     for rec in records:
-        text = " ".join([
-            rec.get("description", ""),
-            rec.get("question", ""),
-            rec.get("answer", ""),
-            (rec.get("readme") or "")[:1000],
-        ])
+        text = " ".join(
+            [
+                rec.get("description", ""),
+                rec.get("question", ""),
+                rec.get("answer", ""),
+                (rec.get("readme") or "")[:1000],
+            ]
+        )
         signatures.append(minhash_signature(text))
 
     # LSH bucketing for efficiency (instead of O(n^2))
@@ -172,7 +174,7 @@ def deduplicate_records(records: list[dict], threshold: float = 0.85) -> list[di
     buckets: dict[tuple, list[int]] = defaultdict(list)
     for i, sig in enumerate(signatures):
         for band in range(num_bands):
-            band_hash = tuple(sig[band * band_size:(band + 1) * band_size])
+            band_hash = tuple(sig[band * band_size : (band + 1) * band_size])
             buckets[band_hash].append(i)
 
     # Find duplicate candidates from same buckets
@@ -210,9 +212,10 @@ def deduplicate_records(records: list[dict], threshold: float = 0.85) -> list[di
         group_list = list(group)
         # Sort by quality score descending
         group_list.sort(
-            key=lambda i: records[i].get("_quality_score",
-                                          records[i].get("quality_score", 0)),
-            reverse=True
+            key=lambda i: records[i].get(
+                "_quality_score", records[i].get("quality_score", 0)
+            ),
+            reverse=True,
         )
         # Remove all but the best
         for idx in group_list[1:]:
@@ -267,11 +270,13 @@ def compute_complexity(record: dict) -> int:
     base_complexity = comp_type_map.get("default", 3)
 
     # Check for technique mentions in description/content
-    text = " ".join([
-        record.get("description", ""),
-        (record.get("readme") or "")[:2000],
-        record.get("method_name", ""),
-    ]).lower()
+    text = " ".join(
+        [
+            record.get("description", ""),
+            (record.get("readme") or "")[:2000],
+            record.get("method_name", ""),
+        ]
+    ).lower()
 
     technique_levels = []
     for technique, level in TECHNIQUE_COMPLEXITY.items():
@@ -327,7 +332,7 @@ def balance_coverage(
             # Upsample with repetition if needed
             selected = available[:]
             while len(selected) < target_count and available:
-                selected.extend(available[:target_count - len(selected)])
+                selected.extend(available[: target_count - len(selected)])
             selected = selected[:target_count]
 
         balanced.extend(selected)
@@ -383,7 +388,7 @@ def print_stats(records: list[dict]) -> None:
         quality_sum += rec.get("_quality_score", 0)
 
     total = len(records)
-    print(f"\n=== COMPETITION CURRICULUM STATISTICS ===")
+    print("\n=== COMPETITION CURRICULUM STATISTICS ===")
     print(f"Total records: {total}")
     print(f"Average quality: {quality_sum / max(total, 1):.3f}")
 
@@ -396,8 +401,17 @@ def print_stats(records: list[dict]) -> None:
     print("\nBy complexity level:")
     for level in sorted(by_complexity.keys()):
         count = by_complexity[level]
-        labels = {1: "binary_clf", 2: "multiclass", 3: "cv_basic", 4: "nlp_basic",
-                  5: "advanced", 6: "detection", 7: "multimodal", 8: "rl", 9: "expert"}
+        labels = {
+            1: "binary_clf",
+            2: "multiclass",
+            3: "cv_basic",
+            4: "nlp_basic",
+            5: "advanced",
+            6: "detection",
+            7: "multimodal",
+            8: "rl",
+            9: "expert",
+        }
         label = labels.get(level, "unknown")
         print(f"  Level {level} ({label:12}): {count:>6}")
 
@@ -409,10 +423,16 @@ def main():
     parser.add_argument("--input", type=Path, default=DATA_DIR)
     parser.add_argument("--output", type=Path, default=CURRICULUM_DIR)
     parser.add_argument("--stats", action="store_true", help="Stats only, no output")
-    parser.add_argument("--total", type=int, default=None, help="Total examples to include")
+    parser.add_argument(
+        "--total", type=int, default=None, help="Total examples to include"
+    )
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--dedup-threshold", type=float, default=0.85,
-                        help="MinHash similarity threshold for deduplication")
+    parser.add_argument(
+        "--dedup-threshold",
+        type=float,
+        default=0.85,
+        help="MinHash similarity threshold for deduplication",
+    )
     args = parser.parse_args()
 
     random.seed(args.seed)
@@ -456,7 +476,7 @@ def main():
 
     # Apply total limit
     if args.total and len(curriculum) > args.total:
-        curriculum = curriculum[:args.total]
+        curriculum = curriculum[: args.total]
 
     # Full curriculum
     full_path = args.output / "competition_curriculum.jsonl"

@@ -3,7 +3,6 @@ Ensemble Agent — builds optimal submission from a model zoo.
 Knows when to stack vs. blend, how to select ensemble members, pseudo-labeling.
 """
 
-import json
 from pathlib import Path
 
 import numpy as np
@@ -25,17 +24,21 @@ def hill_climbing_selection(
     Start with best model, greedily add models that improve ensemble CV.
     Returns {model_name: weight}.
     """
-    compare = (lambda a, b: a > b) if direction == "higher_is_better" else (lambda a, b: a < b)
+    compare = (
+        (lambda a, b: a > b)
+        if direction == "higher_is_better"
+        else (lambda a, b: a < b)
+    )
     best_score = None
     weights = {name: 0.0 for name in oof_preds}
 
     # Start with best individual model
-    model_scores = {
-        name: metric_fn(y_true, preds)
-        for name, preds in oof_preds.items()
-    }
-    best_model = max(model_scores, key=model_scores.get) if direction == "higher_is_better" \
+    model_scores = {name: metric_fn(y_true, preds) for name, preds in oof_preds.items()}
+    best_model = (
+        max(model_scores, key=model_scores.get)
+        if direction == "higher_is_better"
         else min(model_scores, key=model_scores.get)
+    )
 
     weights[best_model] = 1.0
     best_score = model_scores[best_model]
@@ -52,9 +55,7 @@ def hill_climbing_selection(
 
             # Compute blended prediction
             blended = sum(
-                normalized[n] * oof_preds[n]
-                for n in normalized
-                if normalized[n] > 0
+                normalized[n] * oof_preds[n] for n in normalized if normalized[n] > 0
             )
             score = metric_fn(y_true, blended)
 
@@ -136,20 +137,29 @@ class EnsembleAgent:
         y_true = model_results.get("y_true")
         model_cv_scores = model_results.get("cv_scores", {})
         # Filter out models that produced None test predictions (no test set)
-        test_preds = {k: v for k, v in model_results.get("test_predictions", {}).items()
-                      if v is not None}
+        test_preds = {
+            k: v
+            for k, v in model_results.get("test_predictions", {}).items()
+            if v is not None
+        }
 
         if not oof_preds or y_true is None:
             logger.warning("No OOF predictions available, using best single model")
             if not model_cv_scores:
                 logger.error("No model scores available — all models failed.")
-                return {"ensemble_cv_score": 0.0, "best_submission_path": None, "strategy": "failed"}
+                return {
+                    "ensemble_cv_score": 0.0,
+                    "best_submission_path": None,
+                    "strategy": "failed",
+                }
             # model_agent normalizes all cv_scores to "higher=better" (negates lower-is-better)
             # so always use max() regardless of metric_direction
             best_model = max(model_cv_scores, key=model_cv_scores.get)
             return {
                 "ensemble_cv_score": model_cv_scores.get(best_model, 0),
-                "best_submission_path": model_results.get("submission_paths", {}).get(best_model),
+                "best_submission_path": model_results.get("submission_paths", {}).get(
+                    best_model
+                ),
                 "strategy": "single_best",
             }
 
@@ -179,17 +189,27 @@ class EnsembleAgent:
                 logger.warning(f"OOF stacking failed ({e}), using hill climbing")
                 can_stack = False
 
-        logger.info(f"Hill climbing CV: {hc_score:.5f}" +
-                    (f" | Stacking CV: {stack_score:.5f}" if can_stack else " | Stacking: N/A"))
+        logger.info(
+            f"Hill climbing CV: {hc_score:.5f}"
+            + (
+                f" | Stacking CV: {stack_score:.5f}"
+                if can_stack
+                else " | Stacking: N/A"
+            )
+        )
 
-        compare = lambda a, b: a > b  # Always higher=better since metric_fn normalizes sign
+        def compare(a, b):
+            return a > b  # Always higher=better since metric_fn normalizes sign
+
         if can_stack and compare(stack_score, hc_score):
             final_test_pred = stack_test
             final_cv = stack_score
             strategy = "oof_stacking"
         else:
-            final_test_pred = sum(w * test_preds.get(n, np.zeros_like(hc_blend))
-                                  for n, w in hc_weights.items())
+            final_test_pred = sum(
+                w * test_preds.get(n, np.zeros_like(hc_blend))
+                for n, w in hc_weights.items()
+            )
             final_cv = hc_score
             strategy = f"hill_climbing ({len(hc_weights)} models)"
 
@@ -204,10 +224,12 @@ class EnsembleAgent:
         n_preds = len(final_test_pred)
         if len(test_ids) != n_preds:
             test_ids = np.arange(n_preds)
-        pd.DataFrame({
-            "id": test_ids,
-            "target": final_test_pred,
-        }).to_csv(submission_path, index=False)
+        pd.DataFrame(
+            {
+                "id": test_ids,
+                "target": final_test_pred,
+            }
+        ).to_csv(submission_path, index=False)
 
         return {
             "ensemble_cv_score": final_cv,
@@ -231,8 +253,11 @@ def _get_metric_fn(metric: str):
     if "auc" in metric or "gini" in metric:
         return _safe_roc_auc
     from sklearn.metrics import mean_squared_error, log_loss, accuracy_score
+
     if "rmse" in metric or "rmsle" in metric:
-        return lambda y, p: -(mean_squared_error(y, p) ** 0.5)  # Negated so higher=better, matching model_agent convention
+        return lambda y, p: (
+            -(mean_squared_error(y, p) ** 0.5)
+        )  # Negated so higher=better, matching model_agent convention
     if "mse" in metric or "mae" in metric:
         return lambda y, p: -mean_squared_error(y, p)  # Negated so higher=better
     if "log_loss" in metric or "logloss" in metric:

@@ -52,9 +52,13 @@ class ModelAgent:
         """
         deadline = time.time() + time_budget_hours * 3600
 
-        train_df = feature_results.get("train_engineered") or pd.read_csv(data_path / "train.csv")
+        train_df = feature_results.get("train_engineered") or pd.read_csv(
+            data_path / "train.csv"
+        )
         test_df = feature_results.get("test_engineered") or (
-            pd.read_csv(data_path / "test.csv") if (data_path / "test.csv").exists() else None
+            pd.read_csv(data_path / "test.csv")
+            if (data_path / "test.csv").exists()
+            else None
         )
         feature_cols = feature_results.get("feature_cols", [])
         feature_cols = [c for c in feature_cols if c in train_df.columns]
@@ -64,8 +68,11 @@ class ModelAgent:
         X_test = test_df[feature_cols].fillna(-999) if test_df is not None else None
 
         is_classification = target.nunique() <= 20
-        cv = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=42) if is_classification \
+        cv = (
+            StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=42)
+            if is_classification
             else KFold(n_splits=n_folds, shuffle=True, random_state=42)
+        )
 
         models_to_train = MODEL_ZOO.get(competition_type, MODEL_ZOO["tabular"])
         # Filter to tabular models if CV/NLP (those require separate handling)
@@ -96,10 +103,20 @@ class ModelAgent:
 
                 # Save individual model submission
                 if test_df is not None and X_test is not None:
-                    sub_path = data_path.parent / "submissions" / f"{model_name}_submission.csv"
+                    sub_path = (
+                        data_path.parent
+                        / "submissions"
+                        / f"{model_name}_submission.csv"
+                    )
                     sub_path.parent.mkdir(exist_ok=True)
-                    test_ids = test_df["id"].values if "id" in test_df.columns else np.arange(len(test_df))
-                    pd.DataFrame({"id": test_ids, "target": test_pred}).to_csv(sub_path, index=False)
+                    test_ids = (
+                        test_df["id"].values
+                        if "id" in test_df.columns
+                        else np.arange(len(test_df))
+                    )
+                    pd.DataFrame({"id": test_ids, "target": test_pred}).to_csv(
+                        sub_path, index=False
+                    )
                     submission_paths[model_name] = str(sub_path)
 
             except Exception as e:
@@ -123,7 +140,9 @@ class ModelAgent:
         # metrics), so always pick the maximum score regardless of metric_direction.
         best_model = max(cv_scores, key=cv_scores.get)
 
-        logger.info(f"Model zoo complete. Best: {best_model} ({cv_scores.get(best_model, 0):.5f})")
+        logger.info(
+            f"Model zoo complete. Best: {best_model} ({cv_scores.get(best_model, 0):.5f})"
+        )
 
         return {
             "best_cv_score": cv_scores.get(best_model, 0),
@@ -163,7 +182,9 @@ class ModelAgent:
             oof[val_idx] = _predict(model, model_name, X_val, is_classification)
 
             if X_test is not None:
-                test_preds_list.append(_predict(model, model_name, X_test, is_classification))
+                test_preds_list.append(
+                    _predict(model, model_name, X_test, is_classification)
+                )
 
         cv_score = metric_fn(y, oof)
         test_pred = np.mean(test_preds_list, axis=0) if test_preds_list else None
@@ -174,6 +195,7 @@ class ModelAgent:
 def _has_gpu() -> bool:
     try:
         import torch
+
         return torch.cuda.is_available()
     except ImportError:
         return False
@@ -183,22 +205,40 @@ def _build_model(model_name: str, is_classification: bool):
     gpu = _has_gpu()
     if model_name == "lightgbm":
         cls = lgb.LGBMClassifier if is_classification else lgb.LGBMRegressor
-        return cls(n_estimators=1000, learning_rate=0.05, num_leaves=127,
-                   subsample=0.8, colsample_bytree=0.8, verbose=-1, n_jobs=8)
+        return cls(
+            n_estimators=1000,
+            learning_rate=0.05,
+            num_leaves=127,
+            subsample=0.8,
+            colsample_bytree=0.8,
+            verbose=-1,
+            n_jobs=8,
+        )
     if model_name == "xgboost":
         cls = xgb.XGBClassifier if is_classification else xgb.XGBRegressor
-        kwargs = dict(n_estimators=1000, learning_rate=0.05, max_depth=6,
-                      subsample=0.8, colsample_bytree=0.8,
-                      eval_metric="logloss" if is_classification else "rmse",
-                      tree_method="hist", verbosity=0)
+        kwargs = dict(
+            n_estimators=1000,
+            learning_rate=0.05,
+            max_depth=6,
+            subsample=0.8,
+            colsample_bytree=0.8,
+            eval_metric="logloss" if is_classification else "rmse",
+            tree_method="hist",
+            verbosity=0,
+        )
         if gpu:
             kwargs["device"] = "cuda"
         return cls(**kwargs)
     if model_name == "catboost":
         cls = CatBoostClassifier if is_classification else CatBoostRegressor
-        return cls(iterations=1000, learning_rate=0.05, depth=6,
-                   eval_metric="AUC" if is_classification else "RMSE",
-                   verbose=0, task_type="GPU" if gpu else "CPU")
+        return cls(
+            iterations=1000,
+            learning_rate=0.05,
+            depth=6,
+            eval_metric="AUC" if is_classification else "RMSE",
+            verbose=0,
+            task_type="GPU" if gpu else "CPU",
+        )
     if model_name == "ridge":
         return Ridge(alpha=1.0)
     if model_name == "logistic":
@@ -208,8 +248,12 @@ def _build_model(model_name: str, is_classification: bool):
 
 def _fit_model(model, model_name: str, X_tr, y_tr, X_val, y_val):
     if model_name in ("lightgbm",):
-        model.fit(X_tr, y_tr, eval_set=[(X_val, y_val)],
-                  callbacks=[lgb.early_stopping(50, verbose=False), lgb.log_evaluation(-1)])
+        model.fit(
+            X_tr,
+            y_tr,
+            eval_set=[(X_val, y_val)],
+            callbacks=[lgb.early_stopping(50, verbose=False), lgb.log_evaluation(-1)],
+        )
     elif model_name in ("xgboost",):
         model.fit(X_tr, y_tr, eval_set=[(X_val, y_val)], verbose=False)
     elif model_name in ("catboost",):
@@ -230,19 +274,19 @@ def _predict(model, model_name: str, X, is_classification: bool) -> np.ndarray:
 
 def _safe_roc_auc(y, p) -> float:
     """roc_auc_score that handles both binary (1D p) and multiclass (2D p)."""
-    from sklearn.metrics import roc_auc_score
     if hasattr(p, "ndim") and p.ndim == 2:
         return roc_auc_score(y, p, multi_class="ovr")
     return roc_auc_score(y, p)
 
 
 def _get_metric_fn(metric: str):
-    from sklearn.metrics import roc_auc_score, log_loss, accuracy_score
+    from sklearn.metrics import log_loss, accuracy_score
+
     metric = metric.lower()
     if "auc" in metric or "gini" in metric:
         return _safe_roc_auc
     if "rmse" in metric or "rmsle" in metric:
-        return lambda y, p: -mean_squared_error(y, p) ** 0.5
+        return lambda y, p: -(mean_squared_error(y, p) ** 0.5)
     if "mse" in metric or "mae" in metric:
         return lambda y, p: -mean_squared_error(y, p)
     if "log" in metric or "logloss" in metric:
@@ -251,5 +295,7 @@ def _get_metric_fn(metric: str):
         return accuracy_score
     # Unknown metric: fall back to _safe_roc_auc rather than bare roc_auc_score
     # so multi-class predictions (2D proba arrays) are handled correctly.
-    logger.warning(f"Unknown metric '{metric}', defaulting to AUC. Update _get_metric_fn() if incorrect.")
+    logger.warning(
+        f"Unknown metric '{metric}', defaulting to AUC. Update _get_metric_fn() if incorrect."
+    )
     return _safe_roc_auc

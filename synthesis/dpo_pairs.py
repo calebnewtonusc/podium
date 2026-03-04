@@ -134,7 +134,6 @@ Output JSON with:
 
 The rejected response should be *plausible* — something a smart person might reasonably say, but that a grandmaster would know is wrong or suboptimal. Examples of mistake types: chasing public LB, premature ensembling, over-pruning features, ignoring CV/LB correlation, not checking data leakage."""
 
-    pairs = []
     semaphore = asyncio.Semaphore(8)
 
     async def generate_one():
@@ -195,7 +194,6 @@ async def build_dpo_dataset(
         pairs.append(pair)
 
     async with aiohttp.ClientSession() as session:
-
         # Generate additional pairs via LLM
         logger.info(f"Generating {n_generated} additional DPO pairs...")
         extra = await generate_additional_pairs(session, vllm_url, api_key, n_generated)
@@ -217,9 +215,13 @@ if __name__ == "__main__":
         url = os.environ.get("VLLM_SYNTHESIS_URL")
         key = os.environ.get("VLLM_API_KEY")
         if not url:
-            raise ValueError("VLLM_SYNTHESIS_URL not set. Export it: export VLLM_SYNTHESIS_URL=http://...")
+            raise ValueError(
+                "VLLM_SYNTHESIS_URL not set. Export it: export VLLM_SYNTHESIS_URL=http://..."
+            )
         if not key:
-            raise ValueError("VLLM_API_KEY not set. Export it: export VLLM_API_KEY=your-key")
+            raise ValueError(
+                "VLLM_API_KEY not set. Export it: export VLLM_API_KEY=your-key"
+            )
         asyncio.run(build_dpo_dataset(Path(output), url, key, n_generated))
 
     typer.run(main)

@@ -104,12 +104,14 @@ async def synthesize_competition_dialogue(
             return None
 
         messages.append({"role": "assistant", "content": assistant_msg})
-        dialogue.append({
-            "stage": stage["stage"],
-            "hours_elapsed": stage["hours_elapsed"],
-            "user": user_msg,
-            "assistant": assistant_msg,
-        })
+        dialogue.append(
+            {
+                "stage": stage["stage"],
+                "hours_elapsed": stage["hours_elapsed"],
+                "user": user_msg,
+                "assistant": assistant_msg,
+            }
+        )
 
     return {
         "competition": competition_context.get("competition_name", "unknown"),
@@ -135,7 +137,9 @@ async def synthesize_all_dialogues(
 
     async def bounded(session, comp):
         async with semaphore:
-            return await synthesize_competition_dialogue(session, vllm_url, api_key, comp)
+            return await synthesize_competition_dialogue(
+                session, vllm_url, api_key, comp
+            )
 
     async with aiohttp.ClientSession() as session:
         tasks = [bounded(session, comp) for comp in competitions]
@@ -162,11 +166,17 @@ if __name__ == "__main__":
         url = os.environ.get("VLLM_SYNTHESIS_URL")
         key = os.environ.get("VLLM_API_KEY")
         if not url:
-            raise ValueError("VLLM_SYNTHESIS_URL not set. Export it: export VLLM_SYNTHESIS_URL=http://...")
+            raise ValueError(
+                "VLLM_SYNTHESIS_URL not set. Export it: export VLLM_SYNTHESIS_URL=http://..."
+            )
         if not key:
-            raise ValueError("VLLM_API_KEY not set. Export it: export VLLM_API_KEY=your-key")
-        asyncio.run(synthesize_all_dialogues(
-            Path(competitions), Path(output), url, key, concurrency
-        ))
+            raise ValueError(
+                "VLLM_API_KEY not set. Export it: export VLLM_API_KEY=your-key"
+            )
+        asyncio.run(
+            synthesize_all_dialogues(
+                Path(competitions), Path(output), url, key, concurrency
+            )
+        )
 
     typer.run(main)

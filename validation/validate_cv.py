@@ -147,8 +147,8 @@ def execute_in_docker(
             mem_limit="8g",
             nano_cpus=4_000_000_000,
             network_disabled=True,
-            detach=True,      # Run detached so we can apply timeout
-            remove=False,     # We remove manually in finally block
+            detach=True,  # Run detached so we can apply timeout
+            remove=False,  # We remove manually in finally block
         )
 
         # Wait with timeout
@@ -162,7 +162,9 @@ def execute_in_docker(
         output = raw_logs.decode("utf-8", errors="replace").strip()
 
         if exit_code != 0 or not output:
-            stderr = container.logs(stdout=False, stderr=True).decode("utf-8", errors="replace")
+            stderr = container.logs(stdout=False, stderr=True).decode(
+                "utf-8", errors="replace"
+            )
             return False, None, (stderr or "non-zero exit, no output")[:500]
 
         last_line = output.split("\n")[-1]
@@ -174,9 +176,13 @@ def execute_in_docker(
     except json.JSONDecodeError:
         return False, None, f"invalid JSON output: {output[:200]}"
     except docker.errors.ImageNotFound:
-        return False, None, (
-            f"Docker image '{DOCKER_IMAGE}' not found. "
-            f"Build it first: docker build -f deploy/Dockerfile.execution -t {DOCKER_IMAGE} ."
+        return (
+            False,
+            None,
+            (
+                f"Docker image '{DOCKER_IMAGE}' not found. "
+                f"Build it first: docker build -f deploy/Dockerfile.execution -t {DOCKER_IMAGE} ."
+            ),
         )
     except Exception as e:
         return False, None, f"docker error: {type(e).__name__}: {e}"
@@ -250,5 +256,7 @@ def batch_score(
     if results:
         success_rate = sum(r.success for r in results) / len(results)
         avg_reward = sum(r.reward for r in results) / len(results)
-        logger.info(f"Batch CV scoring: {success_rate:.0%} success, avg reward {avg_reward:.3f}")
+        logger.info(
+            f"Batch CV scoring: {success_rate:.0%} success, avg reward {avg_reward:.3f}"
+        )
     return results

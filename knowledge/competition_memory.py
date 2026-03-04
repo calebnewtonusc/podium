@@ -69,9 +69,13 @@ class CompetitionMemory:
         # Populated lazily on first access; invalidated when record_competition() appends.
         self._record_index: dict[str, dict] | None = None
 
-        logger.info(f"Competition memory loaded: {self.collection.count()} competitions")
+        logger.info(
+            f"Competition memory loaded: {self.collection.count()} competitions"
+        )
 
-    def _fingerprint(self, competition_type: str, metric: str, description: str = "") -> str:
+    def _fingerprint(
+        self, competition_type: str, metric: str, description: str = ""
+    ) -> str:
         """Create a text fingerprint for embedding-based similarity search."""
         return f"{competition_type} {metric} {description}".strip()
 
@@ -89,7 +93,9 @@ class CompetitionMemory:
             competition_id=session.competition_url.split("/")[-1],
             competition_type=session.competition_type,
             metric=session.metric,
-            final_cv_score=float(results.get("final_cv_score", 0)),  # ensure JSON-serializable
+            final_cv_score=float(
+                results.get("final_cv_score", 0)
+            ),  # ensure JSON-serializable
             leaderboard_percentile=results.get("leaderboard_percentile"),
             winning_features=feature_phase.get("top_features", []),
             winning_models=model_phase.get("best_models", []),
@@ -112,12 +118,14 @@ class CompetitionMemory:
         self.collection.upsert(
             ids=[entry.competition_id],
             embeddings=[embedding],
-            metadatas=[{
-                "competition_type": entry.competition_type,
-                "metric": entry.metric,
-                "final_cv_score": entry.final_cv_score,
-                "ensemble_strategy": entry.ensemble_strategy,
-            }],
+            metadatas=[
+                {
+                    "competition_type": entry.competition_type,
+                    "metric": entry.metric,
+                    "final_cv_score": entry.final_cv_score,
+                    "ensemble_strategy": entry.ensemble_strategy,
+                }
+            ],
             documents=[fingerprint],
         )
 
@@ -131,7 +139,9 @@ class CompetitionMemory:
         if self._record_index is not None:
             self._record_index[entry.competition_id] = record_dict
 
-        logger.info(f"Recorded competition {entry.competition_id} → memory ({self.collection.count()} total)")
+        logger.info(
+            f"Recorded competition {entry.competition_id} → memory ({self.collection.count()} total)"
+        )
 
     def search_similar(
         self,
@@ -244,5 +254,6 @@ class CompetitionMemory:
         return {
             "total_competitions": len(records),
             "by_type": type_counts,
-            "avg_cv_score": sum(r.get("final_cv_score", 0) for r in records) / max(len(records), 1),
+            "avg_cv_score": sum(r.get("final_cv_score", 0) for r in records)
+            / max(len(records), 1),
         }

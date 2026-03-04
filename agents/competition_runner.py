@@ -5,9 +5,8 @@ Orchestrates all specialist agents across the full competition lifecycle.
 
 import asyncio
 import json
-import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -59,10 +58,10 @@ class CompetitionRunner:
 
     # Phase time allocations (fraction of total budget)
     PHASE_ALLOCATIONS = {
-        "eda": 0.15,        # 15% — EDA and data understanding
-        "features": 0.30,   # 30% — Feature engineering iteration
-        "modeling": 0.35,   # 35% — Model training and CV
-        "ensemble": 0.20,   # 20% — Ensembling and final submission
+        "eda": 0.15,  # 15% — EDA and data understanding
+        "features": 0.30,  # 30% — Feature engineering iteration
+        "modeling": 0.35,  # 35% — Model training and CV
+        "ensemble": 0.20,  # 20% — Ensembling and final submission
     }
 
     def __init__(self, model_path: str, memory_path: str = "./data/competition_memory"):
@@ -116,15 +115,20 @@ class CompetitionRunner:
         # Check for text columns in train.csv
         try:
             import pandas as pd
+
             train = pd.read_csv(data_path / "train.csv", nrows=100)
             text_cols = [
-                c for c in train.columns
-                if train[c].dtype == object
-                and _safe_mean_len(train[c]) > 50
+                c
+                for c in train.columns
+                if train[c].dtype == object and _safe_mean_len(train[c]) > 50
             ]
-            time_cols = [c for c in train.columns if any(
-                kw in c.lower() for kw in ["date", "time", "year", "month", "week"]
-            )]
+            time_cols = [
+                c
+                for c in train.columns
+                if any(
+                    kw in c.lower() for kw in ["date", "time", "year", "month", "week"]
+                )
+            ]
             if text_cols:
                 return "nlp"
             if time_cols:
@@ -158,10 +162,14 @@ class CompetitionRunner:
             time_budget_hours=phase_budget,
         )
 
-        logger.info(f"EDA complete. Key findings: {len(eda_results.get('insights', []))}")
+        logger.info(
+            f"EDA complete. Key findings: {len(eda_results.get('insights', []))}"
+        )
         return eda_results
 
-    async def run_feature_phase(self, session: CompetitionSession, eda_results: dict) -> dict:
+    async def run_feature_phase(
+        self, session: CompetitionSession, eda_results: dict
+    ) -> dict:
         """Phase 2: Feature engineering — iterative improvement. Runs in a thread."""
         phase_budget = self.PHASE_ALLOCATIONS["features"] * session.time_budget_hours
         logger.info(f"Starting feature engineering phase ({phase_budget:.1f}h budget)")
@@ -248,7 +256,9 @@ class CompetitionRunner:
 
         train_csv = session.data_path / "train.csv"
         if not train_csv.exists():
-            raise FileNotFoundError(f"train.csv not found at {train_csv}. Check that data_path is correct.")
+            raise FileNotFoundError(
+                f"train.csv not found at {train_csv}. Check that data_path is correct."
+            )
 
         logger.info(f"Podium starting competition: {competition_url}")
         logger.info(f"Time budget: {time_budget_hours}h | Data: {data_path}")
@@ -258,10 +268,12 @@ class CompetitionRunner:
         session.competition_type = self.detect_competition_type(session.data_path, meta)
         session.metric = meta.get("evaluation_metric", "auc")
         session.metric_direction = _metric_direction(session.metric)
-        logger.info(f"Competition type: {session.competition_type} | Metric: {session.metric} ({session.metric_direction})")
+        logger.info(
+            f"Competition type: {session.competition_type} | Metric: {session.metric} ({session.metric_direction})"
+        )
 
         # Retrieve similar historical competitions from memory
-        similar = self.retrieve_similar_competitions(session)
+        self.retrieve_similar_competitions(session)
 
         # Run pipeline phases
         eda_results = await self.run_eda_phase(session)
@@ -279,7 +291,9 @@ class CompetitionRunner:
             "competition": competition_url,
             "competition_type": session.competition_type,
             "metric": session.metric,
-            "final_cv_score": ensemble_results.get("ensemble_cv_score", session.best_cv_score),
+            "final_cv_score": ensemble_results.get(
+                "ensemble_cv_score", session.best_cv_score
+            ),
             "submission_path": submission_path,
             "hours_used": session.hours_elapsed,
             "phases": {
@@ -306,13 +320,19 @@ class CompetitionRunner:
 def _metric_direction(metric: str) -> str:
     """Return 'lower_is_better' for error/loss metrics, else 'higher_is_better'."""
     m = metric.lower().replace(" ", "_").replace("-", "_")
-    return "lower_is_better" if any(
-        kw in m for kw in ["rmse", "rmsle", "mse", "mae", "error", "loss", "logloss"]
-    ) else "higher_is_better"
+    return (
+        "lower_is_better"
+        if any(
+            kw in m
+            for kw in ["rmse", "rmsle", "mse", "mae", "error", "loss", "logloss"]
+        )
+        else "higher_is_better"
+    )
 
 
 def _get_kaggle_key() -> str:
     import os
+
     return os.environ.get("KAGGLE_KEY", "")
 
 
@@ -337,9 +357,9 @@ if __name__ == "__main__":
         time_budget_hours: float = 168.0,
     ):
         runner = CompetitionRunner(model_path=model_path)
-        results = asyncio.run(runner.compete(
-            competition_url, data_path, output_dir, time_budget_hours
-        ))
+        results = asyncio.run(
+            runner.compete(competition_url, data_path, output_dir, time_budget_hours)
+        )
         print(f"\nFinal CV Score: {results['final_cv_score']:.5f}")
         print(f"Submission: {results['submission_path']}")
 

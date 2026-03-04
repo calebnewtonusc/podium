@@ -11,6 +11,7 @@ from dataclasses import dataclass
 @dataclass
 class TabularStrategy:
     """Strategy config for a tabular competition."""
+
     use_target_encoding: bool = True
     use_group_stats: bool = True
     use_pseudo_labeling: bool = True
@@ -33,7 +34,7 @@ def get_strategy(competition_meta: dict) -> TabularStrategy:
     Select tabular strategy based on competition characteristics.
     """
     n_rows = competition_meta.get("n_train", 0)
-    n_features = competition_meta.get("n_features", 0)
+    competition_meta.get("n_features", 0)
     metric = competition_meta.get("metric", "auc").lower()
     has_time = competition_meta.get("has_datetime_cols", False)
     is_imbalanced = competition_meta.get("is_imbalanced", False)

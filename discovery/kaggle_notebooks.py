@@ -4,12 +4,10 @@ Fetches high-quality competition notebooks via the Kaggle API.
 """
 
 import json
-import os
 import time
 from pathlib import Path
 from typing import Iterator
 
-import httpx
 from kaggle.api.kaggle_api_extended import KaggleApiExtended
 from loguru import logger
 from tqdm import tqdm
@@ -127,7 +125,9 @@ def stream_competition_notebooks(
             }
 
 
-def fetch_notebook_metadata_bulk(output_path: Path, max_competitions: int = 1000) -> None:
+def fetch_notebook_metadata_bulk(
+    output_path: Path, max_competitions: int = 1000
+) -> None:
     """
     Discover all high-quality competition notebooks and save metadata index.
     This is the first step — run before fetch_bulk.py.

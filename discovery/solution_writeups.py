@@ -71,7 +71,9 @@ def fetch_topic_content(
     session: httpx.Client,
 ) -> str | None:
     """Fetch full text content of a discussion topic."""
-    resp = session.get(f"{KAGGLE_API}/competitions/{competition_slug}/topics/{topic_id}")
+    resp = session.get(
+        f"{KAGGLE_API}/competitions/{competition_slug}/topics/{topic_id}"
+    )
     if resp.status_code != 200:
         return None
     data = resp.json()
@@ -143,9 +145,13 @@ if __name__ == "__main__":
         kaggle_username = os.environ.get("KAGGLE_USERNAME")
         kaggle_key = os.environ.get("KAGGLE_KEY")
         if not kaggle_username:
-            raise ValueError("KAGGLE_USERNAME not set. Export it: export KAGGLE_USERNAME=your-username")
+            raise ValueError(
+                "KAGGLE_USERNAME not set. Export it: export KAGGLE_USERNAME=your-username"
+            )
         if not kaggle_key:
-            raise ValueError("KAGGLE_KEY not set. Export it: export KAGGLE_KEY=your-key")
+            raise ValueError(
+                "KAGGLE_KEY not set. Export it: export KAGGLE_KEY=your-key"
+            )
         collect_solution_writeups(
             competitions,
             Path(output_dir),

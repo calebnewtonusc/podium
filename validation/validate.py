@@ -81,11 +81,13 @@ def score_by_leaderboard_rank(record: dict) -> float:
                 return 0.30
 
     # Scan text for positive/negative signals
-    text = " ".join([
-        record.get("description", ""),
-        record.get("answer", record.get("reasoning", "")),
-        (record.get("readme") or "")[:2000],
-    ])
+    text = " ".join(
+        [
+            record.get("description", ""),
+            record.get("answer", record.get("reasoning", "")),
+            (record.get("readme") or "")[:2000],
+        ]
+    )
     pos = sum(1 for p in _POSITIVE_SIGNALS if p.search(text))
     neg = sum(1 for n in _NEGATIVE_SIGNALS if n.search(text))
 
@@ -98,21 +100,23 @@ def score_by_leaderboard_rank(record: dict) -> float:
 
 def is_low_quality_post(record: dict) -> bool:
     """Return True if record appears to be a 'I didn't win but here's what I tried' post."""
-    text = " ".join([
-        record.get("description", ""),
-        record.get("answer", ""),
-        (record.get("readme") or "")[:2000],
-    ])
+    text = " ".join(
+        [
+            record.get("description", ""),
+            record.get("answer", ""),
+            (record.get("readme") or "")[:2000],
+        ]
+    )
     neg = sum(1 for n in _NEGATIVE_SIGNALS if n.search(text))
     pos = sum(1 for p in _POSITIVE_SIGNALS if p.search(text))
     return neg > 0 and pos == 0
 
 
 QUALITY_THRESHOLDS = {
-    "min_code_length": 100,       # Minimum chars in code field
-    "min_reasoning_length": 50,   # Minimum chars in reasoning/explanation
-    "min_total_length": 300,      # Minimum total pair length
-    "dedup_threshold": 0.85,      # MinHash similarity threshold for dedup
+    "min_code_length": 100,  # Minimum chars in code field
+    "min_reasoning_length": 50,  # Minimum chars in reasoning/explanation
+    "min_total_length": 300,  # Minimum total pair length
+    "dedup_threshold": 0.85,  # MinHash similarity threshold for dedup
     "dedup_num_perm": 128,
 }
 
@@ -132,8 +136,15 @@ def quality_score(pair: dict) -> float:
     """
     score = 0.0
 
-    code = pair.get("solution_code", pair.get("code_example", pair.get("code", ""))) or ""
-    reasoning = pair.get("key_insight", pair.get("expert_explanation", pair.get("reasoning", ""))) or ""
+    code = (
+        pair.get("solution_code", pair.get("code_example", pair.get("code", ""))) or ""
+    )
+    reasoning = (
+        pair.get(
+            "key_insight", pair.get("expert_explanation", pair.get("reasoning", ""))
+        )
+        or ""
+    )
     total_text = json.dumps(pair)
 
     # Length checks
@@ -145,7 +156,9 @@ def quality_score(pair: dict) -> float:
         score += 0.1
 
     # Code quality signals
-    if "import" in code and ("sklearn" in code or "lightgbm" in code or "torch" in code):
+    if "import" in code and (
+        "sklearn" in code or "lightgbm" in code or "torch" in code
+    ):
         score += 0.1
     if "def " in code or "class " in code:
         score += 0.1
@@ -199,7 +212,9 @@ def validate_and_deduplicate(
     # Quality filter
     scored = [(pair, quality_score(pair)) for pair in all_pairs]
     quality_filtered = [pair for pair, score in scored if score >= min_quality]
-    logger.info(f"After quality filter ({min_quality:.1f}): {len(quality_filtered)} pairs")
+    logger.info(
+        f"After quality filter ({min_quality:.1f}): {len(quality_filtered)} pairs"
+    )
 
     # MinHash deduplication
     lsh = MinHashLSH(

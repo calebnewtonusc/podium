@@ -3,18 +3,18 @@ Techniques knowledge base — structured catalog of ML competition techniques.
 Used to prime agents with relevant technique context based on competition type.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass
 class Technique:
     name: str
-    domain: list[str]        # Competition types this applies to
-    impact: str              # "high" / "medium" / "low"
-    when: str                # Conditions under which to apply
-    how: str                 # Implementation summary
-    pitfall: str             # Common mistake
-    typical_gain: str        # Expected CV improvement
+    domain: list[str]  # Competition types this applies to
+    impact: str  # "high" / "medium" / "low"
+    when: str  # Conditions under which to apply
+    how: str  # Implementation summary
+    pitfall: str  # Common mistake
+    typical_gain: str  # Expected CV improvement
 
 
 TECHNIQUES_KB: list[Technique] = [
@@ -124,9 +124,13 @@ TECHNIQUES_KB: list[Technique] = [
 ]
 
 
-def get_techniques_for_competition(competition_type: str, n_top: int = 5) -> list[Technique]:
+def get_techniques_for_competition(
+    competition_type: str, n_top: int = 5
+) -> list[Technique]:
     """Return most relevant techniques for a competition type."""
-    relevant = [t for t in TECHNIQUES_KB if competition_type in t.domain or "all" in t.domain]
+    relevant = [
+        t for t in TECHNIQUES_KB if competition_type in t.domain or "all" in t.domain
+    ]
     high_impact = [t for t in relevant if t.impact == "high"]
     medium_impact = [t for t in relevant if t.impact == "medium"]
     return (high_impact + medium_impact)[:n_top]

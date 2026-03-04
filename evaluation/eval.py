@@ -14,44 +14,134 @@ from tqdm import tqdm
 
 # Medal thresholds (% of teams) from Kaggle's official rules
 MEDAL_THRESHOLDS = {
-    "gold":   0.005,   # Top 0.5% — first place only in small competitions
-    "silver": 0.05,    # Top 5%
-    "bronze": 0.10,    # Top 10%
+    "gold": 0.005,  # Top 0.5% — first place only in small competitions
+    "silver": 0.05,  # Top 5%
+    "bronze": 0.10,  # Top 10%
 }
+
 
 # 75 representative competitions (subset of MLE-bench)
 def _metric_direction(metric: str) -> str:
     """Infer whether higher or lower scores are better for a given metric name."""
-    lower_is_better = {"rmse", "mse", "mae", "rmsle", "log_loss", "logloss", "mcrmse", "wrmsse", "mape"}
-    return "lower_is_better" if metric.lower() in lower_is_better else "higher_is_better"
+    lower_is_better = {
+        "rmse",
+        "mse",
+        "mae",
+        "rmsle",
+        "log_loss",
+        "logloss",
+        "mcrmse",
+        "wrmsse",
+        "mape",
+    }
+    return (
+        "lower_is_better" if metric.lower() in lower_is_better else "higher_is_better"
+    )
 
 
 PODIUM_BENCH_COMPETITIONS = [
     # Tabular — 30 competitions
     {"id": "titanic", "type": "tabular", "metric": "accuracy", "difficulty": "low"},
-    {"id": "house-prices-advanced-regression-techniques", "type": "tabular", "metric": "rmse", "difficulty": "low"},
-    {"id": "porto-seguro-safe-driver-prediction", "type": "tabular", "metric": "gini", "difficulty": "medium"},
-    {"id": "santander-customer-transaction-prediction", "type": "tabular", "metric": "auc", "difficulty": "medium"},
-    {"id": "ieee-fraud-detection", "type": "tabular", "metric": "auc", "difficulty": "high"},
-    {"id": "amex-default-prediction", "type": "tabular", "metric": "amex_metric", "difficulty": "high"},
-    {"id": "otto-group-product-classification-challenge", "type": "tabular", "metric": "log_loss", "difficulty": "medium"},
-    {"id": "tabular-playground-series-jan-2022", "type": "tabular", "metric": "auc", "difficulty": "low"},
-    {"id": "playground-series-s3e26", "type": "tabular", "metric": "auc", "difficulty": "medium"},
+    {
+        "id": "house-prices-advanced-regression-techniques",
+        "type": "tabular",
+        "metric": "rmse",
+        "difficulty": "low",
+    },
+    {
+        "id": "porto-seguro-safe-driver-prediction",
+        "type": "tabular",
+        "metric": "gini",
+        "difficulty": "medium",
+    },
+    {
+        "id": "santander-customer-transaction-prediction",
+        "type": "tabular",
+        "metric": "auc",
+        "difficulty": "medium",
+    },
+    {
+        "id": "ieee-fraud-detection",
+        "type": "tabular",
+        "metric": "auc",
+        "difficulty": "high",
+    },
+    {
+        "id": "amex-default-prediction",
+        "type": "tabular",
+        "metric": "amex_metric",
+        "difficulty": "high",
+    },
+    {
+        "id": "otto-group-product-classification-challenge",
+        "type": "tabular",
+        "metric": "log_loss",
+        "difficulty": "medium",
+    },
+    {
+        "id": "tabular-playground-series-jan-2022",
+        "type": "tabular",
+        "metric": "auc",
+        "difficulty": "low",
+    },
+    {
+        "id": "playground-series-s3e26",
+        "type": "tabular",
+        "metric": "auc",
+        "difficulty": "medium",
+    },
     # ... (full list in podium_bench_competitions.json)
-
     # Computer Vision — 20 competitions
-    {"id": "dogs-vs-cats-redux-kernels-edition", "type": "cv", "metric": "log_loss", "difficulty": "low"},
-    {"id": "plant-pathology-2020-fgvc7", "type": "cv", "metric": "roc_auc", "difficulty": "medium"},
-    {"id": "rsna-pneumonia-detection-challenge", "type": "cv", "metric": "iou", "difficulty": "high"},
-
+    {
+        "id": "dogs-vs-cats-redux-kernels-edition",
+        "type": "cv",
+        "metric": "log_loss",
+        "difficulty": "low",
+    },
+    {
+        "id": "plant-pathology-2020-fgvc7",
+        "type": "cv",
+        "metric": "roc_auc",
+        "difficulty": "medium",
+    },
+    {
+        "id": "rsna-pneumonia-detection-challenge",
+        "type": "cv",
+        "metric": "iou",
+        "difficulty": "high",
+    },
     # NLP — 15 competitions
-    {"id": "tweet-sentiment-extraction", "type": "nlp", "metric": "jaccard", "difficulty": "medium"},
-    {"id": "feedback-prize-english-language-learning", "type": "nlp", "metric": "mcrmse", "difficulty": "high"},
-    {"id": "commonlit-readability-prize", "type": "nlp", "metric": "rmse", "difficulty": "medium"},
-
+    {
+        "id": "tweet-sentiment-extraction",
+        "type": "nlp",
+        "metric": "jaccard",
+        "difficulty": "medium",
+    },
+    {
+        "id": "feedback-prize-english-language-learning",
+        "type": "nlp",
+        "metric": "mcrmse",
+        "difficulty": "high",
+    },
+    {
+        "id": "commonlit-readability-prize",
+        "type": "nlp",
+        "metric": "rmse",
+        "difficulty": "medium",
+    },
     # Time Series — 10 competitions
-    {"id": "store-sales-time-series-forecasting", "type": "time_series", "metric": "rmsle", "difficulty": "medium"},
-    {"id": "m5-forecasting-accuracy", "type": "time_series", "metric": "wrmsse", "difficulty": "high"},
+    {
+        "id": "store-sales-time-series-forecasting",
+        "type": "time_series",
+        "metric": "rmsle",
+        "difficulty": "medium",
+    },
+    {
+        "id": "m5-forecasting-accuracy",
+        "type": "time_series",
+        "metric": "wrmsse",
+        "difficulty": "high",
+    },
 ]
 
 # Inject metric_direction into each competition entry
@@ -165,12 +255,18 @@ def evaluate_agent(
         )
         results.append(result)
         score_str = f"{agent_score:.4f}" if agent_score is not None else "None"
-        logger.info(f"{comp_id}: score={score_str}, percentile={percentile:.1%}, medal={medal}")
+        logger.info(
+            f"{comp_id}: score={score_str}, percentile={percentile:.1%}, medal={medal}"
+        )
 
     # Aggregate metrics
-    medal_counts = {m: sum(1 for r in results if r.medal == m) for m in ["gold", "silver", "bronze"]}
+    medal_counts = {
+        m: sum(1 for r in results if r.medal == m) for m in ["gold", "silver", "bronze"]
+    }
     any_medal = sum(1 for r in results if r.medal is not None)
-    avg_percentile = sum(r.leaderboard_percentile for r in results) / max(len(results), 1)
+    avg_percentile = sum(r.leaderboard_percentile for r in results) / max(
+        len(results), 1
+    )
 
     summary = {
         "n_competitions": len(results),
@@ -198,9 +294,11 @@ def evaluate_agent(
     with open(summary_path, "w") as f:
         json.dump(summary, f, indent=2)
 
-    logger.info(f"\nPodiumBench Results:")
+    logger.info("\nPodiumBench Results:")
     logger.info(f"  Medal rate: {summary['medal_rate']:.1%}")
-    logger.info(f"  Gold: {medal_counts['gold']} | Silver: {medal_counts['silver']} | Bronze: {medal_counts['bronze']}")
+    logger.info(
+        f"  Gold: {medal_counts['gold']} | Silver: {medal_counts['silver']} | Bronze: {medal_counts['bronze']}"
+    )
     logger.info(f"  Avg percentile: top {avg_percentile:.1%}")
 
     return summary
@@ -234,12 +332,14 @@ if __name__ == "__main__":
         runner = CompetitionRunner(model_path=model_path)
 
         def agent_fn(competition_id, data_path, time_budget):
-            results = asyncio.run(runner.compete(
-                competition_url=f"https://www.kaggle.com/c/{competition_id}",
-                data_path=data_path,
-                output_dir=f"./results/bench/{competition_id}",
-                time_budget_hours=time_budget,
-            ))
+            results = asyncio.run(
+                runner.compete(
+                    competition_url=f"https://www.kaggle.com/c/{competition_id}",
+                    data_path=data_path,
+                    output_dir=f"./results/bench/{competition_id}",
+                    time_budget_hours=time_budget,
+                )
+            )
             return results.get("final_cv_score", 0)
 
         summary = evaluate_agent(

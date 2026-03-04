@@ -8,16 +8,16 @@ Uses cross-validation score improvement as the reward signal — the same
 
 import os
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 # Allow running directly: python training/train_rl.py
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import torch
-from datasets import Dataset, load_from_disk
+from datasets import Dataset
 from loguru import logger
-from peft import LoraConfig, get_peft_model, PeftModel
+from peft import PeftModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from trl import GRPOConfig, GRPOTrainer
 
@@ -61,6 +61,7 @@ def build_reward_function(execution_config: dict):
 
     TRL calls: reward_fn(prompts=prompts, completions=completions, **dataset_cols)
     """
+
     def reward_fn(prompts: list[str], completions: list[str], **kwargs) -> list[float]:
         """
         prompts: list of competition prompts (contain data_path, target, metric)
@@ -113,6 +114,7 @@ def load_rl_dataset(data_path: str) -> Dataset:
     Each example: {prompt, data_path, target_column, metric, baseline_cv}
     """
     import json
+
     examples = []
     with open(data_path) as f:
         for line in f:
@@ -135,11 +137,11 @@ def load_rl_dataset(data_path: str) -> Dataset:
 def format_rl_prompt(example: dict) -> str:
     """Format a competition task as a prompt for RL training."""
     return f"""<competition>
-Type: {example.get('competition_type', 'tabular')}
-Metric: {example.get('metric', 'auc')}
-Target: {example.get('target_column', 'target')}
-Data: {example.get('data_description', 'Standard tabular dataset')}
-Current baseline CV: {example.get('baseline_cv', 0.5):.4f}
+Type: {example.get("competition_type", "tabular")}
+Metric: {example.get("metric", "auc")}
+Target: {example.get("target_column", "target")}
+Data: {example.get("data_description", "Standard tabular dataset")}
+Current baseline CV: {example.get("baseline_cv", 0.5):.4f}
 
 Task: Generate Python code to improve the cross-validation score above the baseline.
 The code should load data from /data/train.csv and set the variable `cv_score`.
@@ -185,7 +187,7 @@ def train(config: RLTrainingConfig):
     trainer = GRPOTrainer(
         model=model,
         processing_class=tokenizer,
-        args=grpo_config,              # Fixed: was config=, should be args=
+        args=grpo_config,  # Fixed: was config=, should be args=
         train_dataset=dataset,
         reward_funcs=[reward_fn],
     )

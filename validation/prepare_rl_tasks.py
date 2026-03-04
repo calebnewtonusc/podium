@@ -43,13 +43,19 @@ def compute_baseline_cv(
         return 0.5
 
     is_classification = target.nunique() <= 20
-    cv = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=42) if is_classification \
+    cv = (
+        StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=42)
+        if is_classification
         else KFold(n_splits=n_folds, shuffle=True, random_state=42)
+    )
 
     scores = []
     for train_idx, val_idx in cv.split(X, target):
-        model = lgb.LGBMClassifier(n_estimators=100, verbose=-1) if is_classification \
+        model = (
+            lgb.LGBMClassifier(n_estimators=100, verbose=-1)
+            if is_classification
             else lgb.LGBMRegressor(n_estimators=100, verbose=-1)
+        )
         model.fit(X.iloc[train_idx], target.iloc[train_idx])
 
         if is_classification:
@@ -60,7 +66,9 @@ def compute_baseline_cv(
                 scores.append(roc_auc_score(target.iloc[val_idx], preds))
             else:
                 # Multi-class: use OvR macro AUC
-                scores.append(roc_auc_score(target.iloc[val_idx], proba, multi_class="ovr"))
+                scores.append(
+                    roc_auc_score(target.iloc[val_idx], proba, multi_class="ovr")
+                )
         else:
             preds = model.predict(X.iloc[val_idx])
             scores.append(mean_squared_error(target.iloc[val_idx], preds) ** 0.5)
@@ -135,17 +143,22 @@ def build_rl_tasks(
             baseline_cv=baseline_cv,
         )
 
-        tasks.append({
-            "prompt": prompt,
-            "data_path": str(data_path),
-            "target_column": target_column,
-            "metric": metric,
-            "baseline_cv": baseline_cv,
-            "competition_type": competition_type,
-            "metric_direction": "lower_is_better" if any(
-                kw in metric.lower() for kw in ["loss", "error", "mse", "rmse", "mae"]
-            ) else "higher_is_better",
-        })
+        tasks.append(
+            {
+                "prompt": prompt,
+                "data_path": str(data_path),
+                "target_column": target_column,
+                "metric": metric,
+                "baseline_cv": baseline_cv,
+                "competition_type": competition_type,
+                "metric_direction": "lower_is_better"
+                if any(
+                    kw in metric.lower()
+                    for kw in ["loss", "error", "mse", "rmse", "mae"]
+                )
+                else "higher_is_better",
+            }
+        )
 
     logger.info(f"Built {len(tasks)} RL execution tasks → {output_path}")
     with open(output_path, "w") as f:

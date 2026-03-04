@@ -157,7 +157,9 @@ async def synthesize_all_techniques(
         tasks = []
         for technique in TECHNIQUES:
             for _ in range(n_variants):
-                tasks.append(synthesize_technique(session, vllm_url, api_key, technique))
+                tasks.append(
+                    synthesize_technique(session, vllm_url, api_key, technique)
+                )
         pairs = await asyncio.gather(*tasks)
         results = [p for p in pairs if p is not None]
 
@@ -177,9 +179,13 @@ if __name__ == "__main__":
         url = os.environ.get("VLLM_SYNTHESIS_URL")
         key = os.environ.get("VLLM_API_KEY")
         if not url:
-            raise ValueError("VLLM_SYNTHESIS_URL not set. Export it: export VLLM_SYNTHESIS_URL=http://...")
+            raise ValueError(
+                "VLLM_SYNTHESIS_URL not set. Export it: export VLLM_SYNTHESIS_URL=http://..."
+            )
         if not key:
-            raise ValueError("VLLM_API_KEY not set. Export it: export VLLM_API_KEY=your-key")
+            raise ValueError(
+                "VLLM_API_KEY not set. Export it: export VLLM_API_KEY=your-key"
+            )
         asyncio.run(synthesize_all_techniques(Path(output), url, key, n_variants))
 
     typer.run(main)

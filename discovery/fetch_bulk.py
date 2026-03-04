@@ -12,7 +12,9 @@ from loguru import logger
 from tqdm import tqdm
 
 
-def download_single(api: KaggleApiExtended, kernel_ref: str, output_dir: Path) -> tuple[str, bool]:
+def download_single(
+    api: KaggleApiExtended, kernel_ref: str, output_dir: Path
+) -> tuple[str, bool]:
     """Download one notebook. Returns (kernel_ref, success)."""
     out_path = output_dir / f"{kernel_ref.replace('/', '__')}.ipynb"
     if out_path.exists():

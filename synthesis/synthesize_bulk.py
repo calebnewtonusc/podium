@@ -54,7 +54,9 @@ async def synthesize_notebook(
 ) -> dict | None:
     """Send one notebook to vLLM for synthesis. Returns structured pair or None."""
     try:
-        content = notebook_path.read_text(errors="replace")[:12000]  # Trim to context limit
+        content = notebook_path.read_text(errors="replace")[
+            :12000
+        ]  # Trim to context limit
     except Exception:
         return None
 
@@ -151,11 +153,17 @@ if __name__ == "__main__":
         url = vllm_url or os.environ.get("VLLM_SYNTHESIS_URL")
         key = os.environ.get("VLLM_API_KEY")
         if not url:
-            raise ValueError("VLLM_SYNTHESIS_URL not set. Export it: export VLLM_SYNTHESIS_URL=http://...")
+            raise ValueError(
+                "VLLM_SYNTHESIS_URL not set. Export it: export VLLM_SYNTHESIS_URL=http://..."
+            )
         if not key:
-            raise ValueError("VLLM_API_KEY not set. Export it: export VLLM_API_KEY=your-key")
-        asyncio.run(synthesize_all(
-            Path(notebook_dir), Path(index), Path(output), url, key, concurrency
-        ))
+            raise ValueError(
+                "VLLM_API_KEY not set. Export it: export VLLM_API_KEY=your-key"
+            )
+        asyncio.run(
+            synthesize_all(
+                Path(notebook_dir), Path(index), Path(output), url, key, concurrency
+            )
+        )
 
     typer.run(main)

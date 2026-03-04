@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import torch
-from datasets import Dataset, concatenate_datasets, load_from_disk
+from datasets import Dataset
 from loguru import logger
 from peft import LoraConfig, TaskType, get_peft_model
 from transformers import (
@@ -70,9 +70,16 @@ def format_training_example(example: dict) -> str:
     # Field name fallback chain covers all 5 synthesis streams:
     # notebook/writeup/discussion → problem_summary/competition, key_insight/reasoning, solution_code/code
     # technique_pairs → competition_scenario, expert_explanation, code_example, domain
-    competition_context = example.get("problem_summary", example.get("competition", example.get("competition_scenario", "")))
-    reasoning = example.get("key_insight", example.get("reasoning", example.get("expert_explanation", "")))
-    code = example.get("solution_code", example.get("code", example.get("code_example", "")))
+    competition_context = example.get(
+        "problem_summary",
+        example.get("competition", example.get("competition_scenario", "")),
+    )
+    reasoning = example.get(
+        "key_insight", example.get("reasoning", example.get("expert_explanation", ""))
+    )
+    code = example.get(
+        "solution_code", example.get("code", example.get("code_example", ""))
+    )
     metric = example.get("evaluation_metric", "")
     comp_type = example.get("competition_type", example.get("domain", ""))
 
@@ -139,9 +146,15 @@ def train(config: SFTTrainingConfig):
         lora_dropout=config.lora_dropout,
         bias="none",
         task_type=TaskType.CAUSAL_LM,
-        target_modules=config.lora_target_modules or [
-            "q_proj", "k_proj", "v_proj", "o_proj",
-            "gate_proj", "up_proj", "down_proj"
+        target_modules=config.lora_target_modules
+        or [
+            "q_proj",
+            "k_proj",
+            "v_proj",
+            "o_proj",
+            "gate_proj",
+            "up_proj",
+            "down_proj",
         ],
     )
     model = get_peft_model(model, lora_config)

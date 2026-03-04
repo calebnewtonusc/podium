@@ -10,7 +10,6 @@ Trains Podium on competition strategy preferences:
 import json
 import os
 from dataclasses import dataclass
-from pathlib import Path
 
 import torch
 from datasets import Dataset
@@ -57,11 +56,13 @@ def load_preference_dataset(data_path: str) -> Dataset:
     with open(data_path) as f:
         for line in f:
             ex = json.loads(line)
-            examples.append({
-                "prompt": ex["prompt"],
-                "chosen": ex["chosen"],   # Better competition strategy
-                "rejected": ex["rejected"],  # Worse strategy
-            })
+            examples.append(
+                {
+                    "prompt": ex["prompt"],
+                    "chosen": ex["chosen"],  # Better competition strategy
+                    "rejected": ex["rejected"],  # Worse strategy
+                }
+            )
     logger.info(f"Loaded {len(examples)} DPO preference pairs")
     return Dataset.from_list(examples)
 
@@ -89,7 +90,9 @@ def train(config: DPOTrainingConfig):
         torch_dtype=torch.bfloat16,
         device_map=None,
     )
-    ref_model = PeftModel.from_pretrained(_ref_base, config.model_name, is_trainable=False)
+    ref_model = PeftModel.from_pretrained(
+        _ref_base, config.model_name, is_trainable=False
+    )
 
     dataset = load_preference_dataset(config.preference_data_path)
 

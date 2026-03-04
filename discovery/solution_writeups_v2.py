@@ -29,6 +29,7 @@ try:
     from loguru import logger
 except ImportError:
     import logging
+
     logger = logging.getLogger(__name__)
     logging.basicConfig(level=logging.INFO)
 
@@ -61,22 +62,34 @@ GITHUB_SOLUTION_QUERIES = [
 
 # ─── Leaderboard rank detection patterns ─────────────────────────────────────
 RANK_PATTERNS = [
-    re.compile(r'\b(\d+)(?:st|nd|rd|th)\s+place', re.I),
-    re.compile(r'rank\s+(\d+)', re.I),
-    re.compile(r'position\s+(\d+)', re.I),
-    re.compile(r'top\s+(\d+)%', re.I),
-    re.compile(r'gold\s+medal', re.I),
-    re.compile(r'silver\s+medal', re.I),
-    re.compile(r'bronze\s+medal', re.I),
-    re.compile(r'leaderboard\s+score[:\s]+([0-9.]+)', re.I),
+    re.compile(r"\b(\d+)(?:st|nd|rd|th)\s+place", re.I),
+    re.compile(r"rank\s+(\d+)", re.I),
+    re.compile(r"position\s+(\d+)", re.I),
+    re.compile(r"top\s+(\d+)%", re.I),
+    re.compile(r"gold\s+medal", re.I),
+    re.compile(r"silver\s+medal", re.I),
+    re.compile(r"bronze\s+medal", re.I),
+    re.compile(r"leaderboard\s+score[:\s]+([0-9.]+)", re.I),
 ]
 
 # ─── Solution quality indicators ─────────────────────────────────────────────
 QUALITY_INDICATORS = [
-    "ensemble", "stacking", "blending", "cross-validation", "feature engineering",
-    "data augmentation", "pseudo labeling", "test-time augmentation", "TTA",
-    "model soup", "swa", "stochastic weight averaging", "cyclic lr",
-    "knowledge distillation", "transfer learning", "pre-trained",
+    "ensemble",
+    "stacking",
+    "blending",
+    "cross-validation",
+    "feature engineering",
+    "data augmentation",
+    "pseudo labeling",
+    "test-time augmentation",
+    "TTA",
+    "model soup",
+    "swa",
+    "stochastic weight averaging",
+    "cyclic lr",
+    "knowledge distillation",
+    "transfer learning",
+    "pre-trained",
 ]
 
 MEDAL_SCORE = {"gold": 3, "silver": 2, "bronze": 1}
@@ -128,13 +141,13 @@ def extract_leaderboard_rank(text: str) -> Optional[dict]:
                 pass
 
     # Check for top % mentions
-    top_pct_match = re.search(r'top\s+(\d+)%', text, re.I)
+    top_pct_match = re.search(r"top\s+(\d+)%", text, re.I)
     if top_pct_match:
         rank_info["top_percent"] = int(top_pct_match.group(1))
         rank_info["has_rank"] = True
 
     # Check for score
-    score_match = re.search(r'score[:\s]+([0-9.]+)', text, re.I)
+    score_match = re.search(r"score[:\s]+([0-9.]+)", text, re.I)
     if score_match:
         try:
             rank_info["lb_score"] = float(score_match.group(1))
@@ -187,10 +200,15 @@ def score_solution_quality(repo: dict, readme: str = "") -> float:
 def fetch_readme(owner: str, repo_name: str, token: str = "") -> str:
     """Fetch README content for a GitHub repo."""
     for branch in ["main", "master"]:
-        url = f"https://raw.githubusercontent.com/{owner}/{repo_name}/{branch}/README.md"
-        req = urllib.request.Request(url, headers={
-            "User-Agent": "nalana-data-harvester/1.0",
-        })
+        url = (
+            f"https://raw.githubusercontent.com/{owner}/{repo_name}/{branch}/README.md"
+        )
+        req = urllib.request.Request(
+            url,
+            headers={
+                "User-Agent": "nalana-data-harvester/1.0",
+            },
+        )
         if token:
             req.add_header("Authorization", f"Bearer {token}")
         try:
@@ -205,13 +223,17 @@ def search_github_solutions(query: str, token: str, max_pages: int = 5) -> list[
     """Search GitHub for competition solution repos."""
     repos = []
     for page in range(1, max_pages + 1):
-        data = gh_get("search/repositories", {
-            "q": query,
-            "sort": "stars",
-            "order": "desc",
-            "per_page": 100,
-            "page": page,
-        }, token)
+        data = gh_get(
+            "search/repositories",
+            {
+                "q": query,
+                "sort": "stars",
+                "order": "desc",
+                "per_page": 100,
+                "page": page,
+            },
+            token,
+        )
         items = data.get("items", [])
         if not items:
             break
@@ -250,7 +272,7 @@ def process_solution_repo(repo: dict, token: str) -> Optional[dict]:
 
     # Extract competition name (often in repo name or description)
     comp_name = ""
-    kaggle_match = re.search(r'kaggle[/\s-]+(\w[\w-]+)', combined)
+    kaggle_match = re.search(r"kaggle[/\s-]+(\w[\w-]+)", combined)
     if kaggle_match:
         comp_name = kaggle_match.group(1)
 
@@ -297,15 +319,21 @@ def main():
         description="Discover and harvest competition solution writeups"
     )
     parser.add_argument("--all", action="store_true", help="Run all modes")
-    parser.add_argument("--github", action="store_true",
-                        help="Search GitHub for competition solution repos")
+    parser.add_argument(
+        "--github",
+        action="store_true",
+        help="Search GitHub for competition solution repos",
+    )
     parser.add_argument("--token", default=os.environ.get("GITHUB_TOKEN", ""))
-    parser.add_argument("--max-pages", type=int, default=5,
-                        help="Pages per GitHub search query")
-    parser.add_argument("--min-stars", type=int, default=3,
-                        help="Minimum stars for solution repos")
-    parser.add_argument("--min-quality", type=float, default=0.2,
-                        help="Minimum quality score to save")
+    parser.add_argument(
+        "--max-pages", type=int, default=5, help="Pages per GitHub search query"
+    )
+    parser.add_argument(
+        "--min-stars", type=int, default=3, help="Minimum stars for solution repos"
+    )
+    parser.add_argument(
+        "--min-quality", type=float, default=0.2, help="Minimum quality score to save"
+    )
     args = parser.parse_args()
 
     if args.all:
@@ -362,11 +390,11 @@ def main():
 
         time.sleep(0.15)
 
-    logger.info(f"\n=== SUMMARY ===")
+    logger.info("\n=== SUMMARY ===")
     logger.info(f"Repos processed: {processed}")
     logger.info(f"Solution records saved: {saved}")
     logger.info(f"Output: {GH_SOLUTIONS_FILE}")
-    logger.info(f"\nNext step: python synthesis/competition_curriculum.py")
+    logger.info("\nNext step: python synthesis/competition_curriculum.py")
 
 
 if __name__ == "__main__":

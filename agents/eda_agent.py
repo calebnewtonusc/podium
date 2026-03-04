@@ -5,7 +5,6 @@ Produces structured insights that feed into feature engineering decisions.
 
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 from loguru import logger
 from scipy.stats import ks_2samp
@@ -46,56 +45,73 @@ class EDAAgent:
 
         # Feature column analysis
         feature_cols = [c for c in train.columns if c not in non_feature_cols]
-        numeric_cols = train[feature_cols].select_dtypes(include="number").columns.tolist()
-        categorical_cols = train[feature_cols].select_dtypes(include="object").columns.tolist()
+        numeric_cols = (
+            train[feature_cols].select_dtypes(include="number").columns.tolist()
+        )
+        categorical_cols = (
+            train[feature_cols].select_dtypes(include="object").columns.tolist()
+        )
         datetime_cols = self._detect_datetime_cols(train[feature_cols])
 
         # Missing value analysis
-        missing = (train[feature_cols].isnull().mean() * 100).sort_values(ascending=False)
+        missing = (train[feature_cols].isnull().mean() * 100).sort_values(
+            ascending=False
+        )
         high_missing = missing[missing > 30].to_dict()
         if high_missing:
-            insights.append({
-                "type": "missing_values",
-                "severity": "high",
-                "details": f"{len(high_missing)} features have >30% missing: {list(high_missing.keys())[:5]}",
-                "action": "consider dropping or imputing with domain-specific logic",
-            })
+            insights.append(
+                {
+                    "type": "missing_values",
+                    "severity": "high",
+                    "details": f"{len(high_missing)} features have >30% missing: {list(high_missing.keys())[:5]}",
+                    "action": "consider dropping or imputing with domain-specific logic",
+                }
+            )
 
         # Target analysis
         target_analysis = self._analyze_target(train, target_col, metric)
         if target_analysis.get("is_imbalanced"):
-            insights.append({
-                "type": "class_imbalance",
-                "severity": "high",
-                "details": f"Target imbalance: minority class = {target_analysis['minority_pct']:.1f}%",
-                "action": "use stratified K-fold, consider class weights or oversampling",
-            })
+            insights.append(
+                {
+                    "type": "class_imbalance",
+                    "severity": "high",
+                    "details": f"Target imbalance: minority class = {target_analysis['minority_pct']:.1f}%",
+                    "action": "use stratified K-fold, consider class weights or oversampling",
+                }
+            )
         if target_analysis.get("is_skewed"):
-            insights.append({
-                "type": "target_skew",
-                "severity": "medium",
-                "details": f"Target skewness = {target_analysis['skewness']:.2f}",
-                "action": f"apply log1p transform (metric: {metric})",
-            })
+            insights.append(
+                {
+                    "type": "target_skew",
+                    "severity": "medium",
+                    "details": f"Target skewness = {target_analysis['skewness']:.2f}",
+                    "action": f"apply log1p transform (metric: {metric})",
+                }
+            )
 
         # Cardinality analysis
         high_cardinality = {
-            c: train[c].nunique()
-            for c in categorical_cols
-            if train[c].nunique() > 50
+            c: train[c].nunique() for c in categorical_cols if train[c].nunique() > 50
         }
         if high_cardinality:
-            insights.append({
-                "type": "high_cardinality",
-                "severity": "medium",
-                "details": f"High cardinality features: {list(high_cardinality.keys())[:5]}",
-                "action": "use target encoding or frequency encoding",
-            })
+            insights.append(
+                {
+                    "type": "high_cardinality",
+                    "severity": "medium",
+                    "details": f"High cardinality features: {list(high_cardinality.keys())[:5]}",
+                    "action": "use target encoding or frequency encoding",
+                }
+            )
 
         # Correlation with target
         if numeric_cols and target_col in train.columns:
             try:
-                correlations = train[numeric_cols].corrwith(train[target_col]).abs().sort_values(ascending=False)
+                correlations = (
+                    train[numeric_cols]
+                    .corrwith(train[target_col])
+                    .abs()
+                    .sort_values(ascending=False)
+                )
                 top_features = correlations.head(10).to_dict()
             except Exception:
                 top_features = {}
@@ -104,25 +120,33 @@ class EDAAgent:
 
         # CV/LB leakage warning for time-based data
         if datetime_cols:
-            insights.append({
-                "type": "temporal_data",
-                "severity": "high",
-                "details": f"Time-based columns detected: {datetime_cols}",
-                "action": "use time-series cross-validation (no shuffle), check for temporal leakage",
-            })
+            insights.append(
+                {
+                    "type": "temporal_data",
+                    "severity": "high",
+                    "details": f"Time-based columns detected: {datetime_cols}",
+                    "action": "use time-series cross-validation (no shuffle), check for temporal leakage",
+                }
+            )
 
         # Train/test distribution shift
         if test is not None:
-            shift_features = self._detect_distribution_shift(train, test, numeric_cols[:20])
+            shift_features = self._detect_distribution_shift(
+                train, test, numeric_cols[:20]
+            )
             if shift_features:
-                insights.append({
-                    "type": "distribution_shift",
-                    "severity": "medium",
-                    "details": f"Possible train/test shift in: {shift_features[:5]}",
-                    "action": "adversarial validation, consider adversarial features",
-                })
+                insights.append(
+                    {
+                        "type": "distribution_shift",
+                        "severity": "medium",
+                        "details": f"Possible train/test shift in: {shift_features[:5]}",
+                        "action": "adversarial validation, consider adversarial features",
+                    }
+                )
 
-        logger.info(f"EDA complete: {len(insights)} insights, {len(feature_cols)} features")
+        logger.info(
+            f"EDA complete: {len(insights)} insights, {len(feature_cols)} features"
+        )
 
         return {
             "target_column": target_col,
@@ -141,8 +165,20 @@ class EDAAgent:
 
     def _detect_target(self, df: pd.DataFrame, metric: str) -> str:
         """Heuristic target column detection."""
-        candidates = ["target", "label", "Target", "Label", "y", "price", "sales",
-                      "salary", "survived", "Survived", "outcome", "class"]
+        candidates = [
+            "target",
+            "label",
+            "Target",
+            "Label",
+            "y",
+            "price",
+            "sales",
+            "salary",
+            "survived",
+            "Survived",
+            "outcome",
+            "class",
+        ]
         for c in candidates:
             if c in df.columns:
                 return c
