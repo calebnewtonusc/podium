@@ -11,7 +11,7 @@ echo "================================================"
 
 # Load environment
 if [ -f .env ]; then
-    export $(grep -v '^#' .env | xargs)
+    set -a && source .env && set +a
     echo "✓ Environment loaded from .env"
 else
     echo "✗ .env not found. Copy .env.example and fill in values."

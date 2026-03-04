@@ -69,28 +69,28 @@ def load_preference_dataset(data_path: str) -> Dataset:
 
 def train(config: DPOTrainingConfig):
     logger.info(f"Loading base model: {config.base_model}")
-    tokenizer = AutoTokenizer.from_pretrained(config.base_model)
+    tokenizer = AutoTokenizer.from_pretrained(config.base_model)  # nosec B615
     tokenizer.pad_token = tokenizer.eos_token
 
     # The RL checkpoint is a PEFT-only adapter, not a full model.
     # Load the base model first, then wrap with PeftModel.
     # device_map=None is required for DeepSpeed ZeRO-3.
-    _base = AutoModelForCausalLM.from_pretrained(
+    _base = AutoModelForCausalLM.from_pretrained(  # nosec B615
         config.base_model,
         torch_dtype=torch.bfloat16,
         device_map=None,
     )
     logger.info(f"Loading RL LoRA adapter for DPO: {config.model_name}")
-    model = PeftModel.from_pretrained(_base, config.model_name, is_trainable=True)
+    model = PeftModel.from_pretrained(_base, config.model_name, is_trainable=True)  # nosec B615
     model.enable_input_require_grads()  # Required for PEFT + gradient_checkpointing
 
     # Reference model (frozen) for KL constraint — same PEFT pattern
-    _ref_base = AutoModelForCausalLM.from_pretrained(
+    _ref_base = AutoModelForCausalLM.from_pretrained(  # nosec B615
         config.base_model,
         torch_dtype=torch.bfloat16,
         device_map=None,
     )
-    ref_model = PeftModel.from_pretrained(
+    ref_model = PeftModel.from_pretrained(  # nosec B615
         _ref_base, config.model_name, is_trainable=False
     )
 

@@ -141,7 +141,9 @@ def pwc_get(endpoint: str, params: dict = None) -> dict:
         },
     )
     try:
-        with urllib.request.urlopen(req, timeout=20) as resp:
+        if not url.startswith("https://"):
+            raise ValueError(f"Unsafe URL scheme: {url}")
+        with urllib.request.urlopen(req, timeout=20) as resp:  # nosec B310
             return json.loads(resp.read())
     except Exception as e:
         logger.debug(f"PWC API {endpoint}: {e}")

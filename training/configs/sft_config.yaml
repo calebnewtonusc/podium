@@ -1,3 +1,4 @@
+---
 # Stage 1: Supervised Fine-Tuning config
 # Run: torchrun --nproc_per_node=18 training/train.py --config training/configs/sft_config.yaml
 

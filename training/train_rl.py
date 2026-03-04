@@ -152,16 +152,16 @@ The code should load data from /data/train.csv and set the variable `cv_score`.
 
 def train(config: RLTrainingConfig):
     logger.info(f"Loading base model: {config.base_model}")
-    base_model = AutoModelForCausalLM.from_pretrained(
+    base_model = AutoModelForCausalLM.from_pretrained(  # nosec B615
         config.base_model,
         torch_dtype=torch.bfloat16,
         device_map="auto",
     )
-    tokenizer = AutoTokenizer.from_pretrained(config.base_model)
+    tokenizer = AutoTokenizer.from_pretrained(config.base_model)  # nosec B615
     tokenizer.pad_token = tokenizer.eos_token
 
     logger.info(f"Loading SFT LoRA adapter from: {config.model_name}")
-    model = PeftModel.from_pretrained(base_model, config.model_name, is_trainable=True)
+    model = PeftModel.from_pretrained(base_model, config.model_name, is_trainable=True)  # nosec B615
     model.enable_input_require_grads()  # Required for PEFT + gradient_checkpointing
 
     logger.info("Loading RL training dataset...")

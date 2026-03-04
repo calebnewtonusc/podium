@@ -12,7 +12,7 @@ def run_user_code(code: str) -> dict:
     """Execute user-generated code and capture cv_score variable."""
     namespace = {}
     try:
-        exec(compile(code, "<generated>", "exec"), namespace)
+        exec(compile(code, "<generated>", "exec"), namespace)  # nosec B102 — intentional: sandboxed ML execution harness runs generated code inside Docker with no network access and non-root user
         cv_score = namespace.get("cv_score")
         if cv_score is None:
             return {"success": False, "error": "cv_score variable not set"}

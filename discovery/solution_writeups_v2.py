@@ -107,7 +107,9 @@ def gh_get(endpoint: str, params: dict, token: str = "") -> dict:
         headers["Authorization"] = f"Bearer {token}"
     req = urllib.request.Request(url, headers=headers)
     try:
-        with urllib.request.urlopen(req, timeout=20) as resp:
+        if not url.startswith("https://"):
+            raise ValueError(f"Unsafe URL scheme: {url}")
+        with urllib.request.urlopen(req, timeout=20) as resp:  # nosec B310
             return json.loads(resp.read())
     except Exception as e:
         logger.debug(f"GitHub {endpoint}: {e}")
@@ -212,7 +214,9 @@ def fetch_readme(owner: str, repo_name: str, token: str = "") -> str:
         if token:
             req.add_header("Authorization", f"Bearer {token}")
         try:
-            with urllib.request.urlopen(req, timeout=10) as resp:
+            if not url.startswith("https://"):
+                raise ValueError(f"Unsafe URL scheme: {url}")
+            with urllib.request.urlopen(req, timeout=10) as resp:  # nosec B310
                 return resp.read().decode("utf-8", errors="replace")
         except Exception:
             continue

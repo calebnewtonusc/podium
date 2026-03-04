@@ -130,7 +130,7 @@ def minhash_signature(text: str, num_hashes: int = 64) -> list[int]:
     for i in range(num_hashes):
         min_hash = float("inf")
         for shingle in shingles:
-            h = int(hashlib.md5(f"{i}:{shingle}".encode()).hexdigest(), 16)
+            h = int(hashlib.md5(f"{i}:{shingle}".encode(), usedforsecurity=False).hexdigest(), 16)
             if h < min_hash:
                 min_hash = h
         signature.append(min_hash % (2**32))
