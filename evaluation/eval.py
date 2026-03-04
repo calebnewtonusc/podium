@@ -145,7 +145,7 @@ def evaluate_agent(
         if lb_path.exists():
             with open(lb_path) as f:
                 lb_data = json.load(f)
-                leaderboard = lb_data.get("scores", [])
+                leaderboard = lb_data.get("scores") or []
                 n_teams = lb_data.get("n_teams", len(leaderboard))
 
         if agent_score is None:

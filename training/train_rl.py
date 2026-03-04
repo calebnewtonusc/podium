@@ -67,10 +67,11 @@ def build_reward_function(execution_config: dict):
         completions: list of generated code strings
         kwargs: extra dataset columns — metadata is a per-sample list of dicts
         """
-        assert len(completions) == len(prompts), (
-            f"completions/prompts length mismatch: {len(completions)} != {len(prompts)}. "
-            "TRL must pass matching lists to the reward function."
-        )
+        if len(completions) != len(prompts):
+            raise ValueError(
+                f"completions/prompts length mismatch: {len(completions)} != {len(prompts)}. "
+                "TRL must pass matching lists to the reward function."
+            )
         metadata_list = kwargs.get("metadata", [{} for _ in range(len(completions))])
         rewards = []
 
@@ -159,6 +160,7 @@ def train(config: RLTrainingConfig):
 
     logger.info(f"Loading SFT LoRA adapter from: {config.model_name}")
     model = PeftModel.from_pretrained(base_model, config.model_name, is_trainable=True)
+    model.enable_input_require_grads()  # Required for PEFT + gradient_checkpointing
 
     logger.info("Loading RL training dataset...")
     dataset = load_rl_dataset(config.train_data_path)
@@ -176,7 +178,7 @@ def train(config: RLTrainingConfig):
         logging_steps=config.logging_steps,
         save_steps=config.save_steps,
         bf16=True,
-        report_to="wandb" if os.environ.get("WANDB_API_KEY") else "none",
+        report_to=["wandb"] if os.environ.get("WANDB_API_KEY") else [],
         run_name="podium-rl-grpo",
     )
 

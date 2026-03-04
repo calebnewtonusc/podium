@@ -157,10 +157,19 @@ The rejected response should be *plausible* — something a smart person might r
                         return None
                     data = await resp.json()
                     result = json.loads(data["choices"][0]["message"]["content"])
+                    question = result.get("question")
+                    chosen = result.get("chosen")
+                    rejected = result.get("rejected")
+                    if question is None or chosen is None or rejected is None:
+                        logger.debug(
+                            f"DPO pair missing fields — question={question is None}, "
+                            f"chosen={chosen is None}, rejected={rejected is None}; skipping"
+                        )
+                        return None
                     return {
-                        "prompt": f"<|im_start|>user\n{result['question']}<|im_end|>\n<|im_start|>assistant\n",
-                        "chosen": result["chosen"] + "<|im_end|>",
-                        "rejected": result["rejected"] + "<|im_end|>",
+                        "prompt": f"<|im_start|>user\n{question}<|im_end|>\n<|im_start|>assistant\n",
+                        "chosen": chosen + "<|im_end|>",
+                        "rejected": rejected + "<|im_end|>",
                         "scenario_type": result.get("scenario", "generated"),
                     }
             except Exception:

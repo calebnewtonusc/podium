@@ -355,16 +355,17 @@ class FeatureAgent:
                 combined[feat_name] = combined[col].rolling(window, min_periods=1).mean()
                 new_features.append(feat_name)
 
-        # Write computed features back into the original dataframes (sorted by date)
+        # Write computed features back into the original dataframes using index alignment
+        # (reindex avoids fragile positional alignment when indices differ after sort)
         train_rows = (combined[combined["__podium_split__"] == 0] if use_test else combined).sort_values(date_col)
         train.sort_values(date_col, inplace=True)
         for feat_name in new_features:
-            train[feat_name] = train_rows[feat_name].values
+            train[feat_name] = train_rows[feat_name].reindex(train.index)
         if use_test:
             test_rows = combined[combined["__podium_split__"] == 1].sort_values(date_col)
             test.sort_values(date_col, inplace=True)
             for feat_name in new_features:
-                test[feat_name] = test_rows[feat_name].values
+                test[feat_name] = test_rows[feat_name].reindex(test.index)
 
         return new_features
 

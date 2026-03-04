@@ -200,9 +200,9 @@ def deduplicate_records(records: list[dict], threshold: float = 0.85) -> list[di
                             break
                     if not group_found:
                         duplicate_groups.append({idx_i, idx_j})
-                    # Mark both indices as processed so the outer dedup guard fires
+                    # Only mark idx_i as processed — marking idx_j would prevent
+                    # later pairs where idx_j appears as the "i" side from being checked.
                     processed.add(idx_i)
-                    processed.add(idx_j)
 
     # Mark duplicates: keep highest quality in each group
     remove_indices = set()

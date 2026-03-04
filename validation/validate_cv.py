@@ -201,7 +201,17 @@ def score_generated_code(
     start = time.time()
     client = _DOCKER_CLIENT
 
-    harness = build_execution_script(generated_code, data_path, target_column, metric)
+    if client is None:
+        return ExecutionResult(
+            success=False,
+            cv_score=None,
+            error="Docker client unavailable (daemon not running or not installed)",
+            execution_time_s=time.time() - start,
+            reward=-1.0,
+        )
+
+    # Generated code sees /data (container-internal path), not the host data_path
+    harness = build_execution_script(generated_code, "/data", target_column, metric)
     success, cv_score, error = execute_in_docker(harness, data_path, client)
     elapsed = time.time() - start
 
@@ -237,7 +247,8 @@ def batch_score(
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         results = list(executor.map(score_one, code_samples))
 
-    success_rate = sum(r.success for r in results) / len(results)
-    avg_reward = sum(r.reward for r in results) / len(results)
-    logger.info(f"Batch CV scoring: {success_rate:.0%} success, avg reward {avg_reward:.3f}")
+    if results:
+        success_rate = sum(r.success for r in results) / len(results)
+        avg_reward = sum(r.reward for r in results) / len(results)
+        logger.info(f"Batch CV scoring: {success_rate:.0%} success, avg reward {avg_reward:.3f}")
     return results

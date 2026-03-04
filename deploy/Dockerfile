@@ -23,6 +23,7 @@ RUN pip install --no-cache-dir \
 COPY agents/ ./agents/
 COPY knowledge/ ./knowledge/
 COPY validation/ ./validation/
+COPY competition_types/ ./competition_types/
 COPY deploy/serve.py ./serve.py
 
 CMD ["uvicorn", "serve:app", "--host", "0.0.0.0", "--port", "8000"]

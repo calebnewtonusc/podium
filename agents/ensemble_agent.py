@@ -234,9 +234,9 @@ def _get_metric_fn(metric: str):
     if "rmse" in metric or "rmsle" in metric:
         return lambda y, p: -(mean_squared_error(y, p) ** 0.5)  # Negated so higher=better, matching model_agent convention
     if "mse" in metric or "mae" in metric:
-        return mean_squared_error
+        return lambda y, p: -mean_squared_error(y, p)  # Negated so higher=better
     if "log_loss" in metric or "logloss" in metric:
-        return log_loss
+        return lambda y, p: -log_loss(y, p)  # Negated so higher=better
     if "acc" in metric:
         return accuracy_score
     return _safe_roc_auc  # Default — use safe version for multi-class support

@@ -166,7 +166,7 @@ def train(config: SFTTrainingConfig):
         bf16=True,
         gradient_checkpointing=True,
         deepspeed="training/configs/deepspeed_zero3.json",
-        report_to="wandb" if os.environ.get("WANDB_API_KEY") else "none",
+        report_to=["wandb"] if os.environ.get("WANDB_API_KEY") else [],
         run_name="podium-sft",
         dataset_text_field="text",
         packing=False,  # Packing corrupts chat format (concatenates <|im_end|><|im_start|>)

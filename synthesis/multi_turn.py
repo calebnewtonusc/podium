@@ -67,7 +67,7 @@ async def synthesize_competition_dialogue(
     vllm_url: str,
     api_key: str,
     competition_context: dict,
-) -> list[dict] | None:
+) -> dict | None:
     """Generate a full multi-turn dialogue for one competition lifecycle."""
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
     dialogue = []

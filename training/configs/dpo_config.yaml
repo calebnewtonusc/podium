@@ -22,5 +22,5 @@ data:
 logging:
   logging_steps: 10
   save_steps: 100
-  report_to: "wandb"
+  report_to: []
   run_name: "podium-dpo-v1"

@@ -33,15 +33,16 @@ training:
   max_grad_norm: 1.0
   bf16: true
   gradient_checkpointing: true
-  packing: true
+  packing: false  # Packing corrupts chat format (concatenates <|im_end|><|im_start|>)
   dataset_text_field: "text"
 
 logging:
   logging_steps: 25
   save_steps: 500
   eval_steps: 500
+  eval_strategy: "steps"
   save_total_limit: 3
-  report_to: "wandb"
+  report_to: []
   run_name: "podium-sft-v1"
 
 data:

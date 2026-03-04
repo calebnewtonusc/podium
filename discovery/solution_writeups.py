@@ -56,7 +56,7 @@ def fetch_competition_discussions(
             break
         for topic in batch:
             if topic.get("voteCount", 0) < min_votes:
-                break
+                continue
             topics.append(topic)
         if len(batch) < 100:
             break
