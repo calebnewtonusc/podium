@@ -1,0 +1,6 @@
+[codespell]
+skip = *.pyc,*.json,*.lock,__pycache__,.git,*.yaml,*.yml,node_modules
+# nd: ordinal suffix abbreviation (1st/2nd/3rd/4th patterns in regex)
+# TE: Target Encoding abbreviation (ML domain)
+# mape: Mean Absolute Percentage Error metric abbreviation
+ignore-words-list = nd,te,mape

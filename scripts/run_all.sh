@@ -11,11 +11,11 @@ echo "================================================"
 
 # Load environment
 if [ -f .env ]; then
-    set -a && source .env && set +a
-    echo "✓ Environment loaded from .env"
+	set -a && source .env && set +a
+	echo "✓ Environment loaded from .env"
 else
-    echo "✗ .env not found. Copy .env.example and fill in values."
-    exit 1
+	echo "✗ .env not found. Copy .env.example and fill in values."
+	exit 1
 fi
 
 # Check environment

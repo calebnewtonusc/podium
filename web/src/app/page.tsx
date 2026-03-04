@@ -32,6 +32,57 @@ function SectionLabel({ label }: { label: string }) {
   );
 }
 
+// ── Sub-components extracted so hooks are called at the top level of a component ─
+
+function StepCard({ step, title, desc }: { step: string; title: string; desc: string }) {
+  const ref = useScrollReveal();
+  return (
+    <div key={step} ref={ref} className="reveal-scale rounded-2xl border border-gray-100 bg-white p-8">
+      <div className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: ACCENT }}>{step}</div>
+      <h3 className="serif font-semibold text-lg mb-3 text-gray-900">{title}</h3>
+      <p className="text-sm text-gray-500 leading-relaxed">{desc}</p>
+    </div>
+  );
+}
+
+function CapabilityCard({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
+  const ref = useScrollReveal();
+  return (
+    <div
+      ref={ref}
+      className="reveal rounded-2xl border border-gray-100 p-7 flex gap-5 hover:border-gray-200 transition-colors"
+    >
+      <div
+        className="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
+        style={{ backgroundColor: `${ACCENT}10` }}
+      >
+        {icon}
+      </div>
+      <div>
+        <h3 className="font-semibold text-sm text-gray-900 mb-1.5">{title}</h3>
+        <p className="text-sm text-gray-500 leading-relaxed">{desc}</p>
+      </div>
+    </div>
+  );
+}
+
+function StatCard({ stat, label, sub }: { stat: string; label: string; sub: string }) {
+  const ref = useScrollReveal();
+  return (
+    <div
+      ref={ref}
+      className="reveal rounded-2xl border p-8"
+      style={{ borderColor: `${ACCENT}20` }}
+    >
+      <div className="text-3xl font-bold tracking-tight mb-2" style={{ color: ACCENT }}>{stat}</div>
+      <div className="text-sm font-semibold text-gray-800 mb-1">{label}</div>
+      <div className="text-xs text-gray-400">{sub}</div>
+    </div>
+  );
+}
+
+// ── Page ─────────────────────────────────────────────────────────────────────
+
 export default function Home() {
   return (
     <div className="min-h-screen bg-white text-[#0a0a0a] overflow-x-hidden">
@@ -134,32 +185,21 @@ export default function Home() {
         <div className="max-w-5xl mx-auto">
           <SectionLabel label="How it works" />
           <div className="grid md:grid-cols-3 gap-6">
-            {[
-              {
-                step: "01",
-                title: "Supervised Fine-Tuning",
-                desc: "800k (task, solution, cv_score) triples from 280k Kaggle notebooks and 50k gold-medal writeups. Base: Qwen2.5-7B-Coder-Instruct. Podium learns the mapping from competition brief to winning approach.",
-              },
-              {
-                step: "02",
-                title: "RL with Verifiable Reward",
-                desc: "Cross-validation score improvement is the reward — measurable and automatic, requiring no human labels. The same insight that made DeepSeek-R1 work, applied to ML competition engineering.",
-              },
-              {
-                step: "03",
-                title: "DPO Alignment",
-                desc: "Direct Preference Optimization on (higher-CV, lower-CV) pairs. Podium learns to prefer ensembling over single models, feature engineering over raw features, and proper temporal CV over naive splits.",
-              },
-            ].map(({ step, title, desc }) => {
-              const ref = useScrollReveal();
-              return (
-                <div key={step} ref={ref} className="reveal-scale rounded-2xl border border-gray-100 bg-white p-8">
-                  <div className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: ACCENT }}>{step}</div>
-                  <h3 className="serif font-semibold text-lg mb-3 text-gray-900">{title}</h3>
-                  <p className="text-sm text-gray-500 leading-relaxed">{desc}</p>
-                </div>
-              );
-            })}
+            <StepCard
+              step="01"
+              title="Supervised Fine-Tuning"
+              desc="800k (task, solution, cv_score) triples from 280k Kaggle notebooks and 50k gold-medal writeups. Base: Qwen2.5-7B-Coder-Instruct. Podium learns the mapping from competition brief to winning approach."
+            />
+            <StepCard
+              step="02"
+              title="RL with Verifiable Reward"
+              desc="Cross-validation score improvement is the reward — measurable and automatic, requiring no human labels. The same insight that made DeepSeek-R1 work, applied to ML competition engineering."
+            />
+            <StepCard
+              step="03"
+              title="DPO Alignment"
+              desc="Direct Preference Optimization on (higher-CV, lower-CV) pairs. Podium learns to prefer ensembling over single models, feature engineering over raw features, and proper temporal CV over naive splits."
+            />
           </div>
         </div>
       </section>
@@ -168,64 +208,42 @@ export default function Home() {
       <section className="px-6 py-24 max-w-5xl mx-auto">
         <SectionLabel label="Capabilities" />
         <div className="grid sm:grid-cols-2 gap-5">
-          {[
-            {
-              icon: (
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/>
-                </svg>
-              ),
-              title: "Tabular ML at scale",
-              desc: "Gradient boosting ensembles (XGBoost + LightGBM + CatBoost), automated feature engineering, target encoding, and stacking — Podium knows when each technique wins.",
-            },
-            {
-              icon: (
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
-                </svg>
-              ),
-              title: "Computer Vision",
-              desc: "ViT fine-tuning, augmentation strategies from top CV notebooks, test-time augmentation, and multi-scale inference — tuned for competition leaderboard, not just accuracy metrics.",
-            },
-            {
-              icon: (
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                </svg>
-              ),
-              title: "NLP competition engineering",
-              desc: "DeBERTa and RoBERTa stacking, custom pooling strategies, mean/max/CLS pooling ensembles, and pseudo-labeling pipelines — the full grandmaster NLP toolkit.",
-            },
-            {
-              icon: (
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-                </svg>
-              ),
-              title: "Time series strategy",
-              desc: "LSTM ensembles with temporal CV, walk-forward validation, fourier features, and lag engineering — Podium understands data leakage in time series and avoids it by default.",
-            },
-          ].map(({ icon, title, desc }) => {
-            const ref = useScrollReveal();
-            return (
-              <div
-                key={title}
-                ref={ref}
-                className="reveal rounded-2xl border border-gray-100 p-7 flex gap-5 hover:border-gray-200 transition-colors"
-              >
-                <div
-                  className="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
-                  style={{ backgroundColor: `${ACCENT}10` }}
-                >
-                  {icon}
-                </div>
-                <div>
-                  <h3 className="font-semibold text-sm text-gray-900 mb-1.5">{title}</h3>
-                  <p className="text-sm text-gray-500 leading-relaxed">{desc}</p>
-                </div>
-              </div>
-            );
-          })}
+          <CapabilityCard
+            icon={
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/>
+              </svg>
+            }
+            title="Tabular ML at scale"
+            desc="Gradient boosting ensembles (XGBoost + LightGBM + CatBoost), automated feature engineering, target encoding, and stacking — Podium knows when each technique wins."
+          />
+          <CapabilityCard
+            icon={
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+              </svg>
+            }
+            title="Computer Vision"
+            desc="ViT fine-tuning, augmentation strategies from top CV notebooks, test-time augmentation, and multi-scale inference — tuned for competition leaderboard, not just accuracy metrics."
+          />
+          <CapabilityCard
+            icon={
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+            }
+            title="NLP competition engineering"
+            desc="DeBERTa and RoBERTa stacking, custom pooling strategies, mean/max/CLS pooling ensembles, and pseudo-labeling pipelines — the full grandmaster NLP toolkit."
+          />
+          <CapabilityCard
+            icon={
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+              </svg>
+            }
+            title="Time series strategy"
+            desc="LSTM ensembles with temporal CV, walk-forward validation, fourier features, and lag engineering — Podium understands data leakage in time series and avoids it by default."
+          />
         </div>
       </section>
 
@@ -234,25 +252,9 @@ export default function Home() {
         <div className="max-w-5xl mx-auto">
           <SectionLabel label="The numbers" />
           <div className="grid sm:grid-cols-3 gap-6">
-            {[
-              { stat: "800k", label: "Training pairs", sub: "280k notebooks + 50k writeups" },
-              { stat: "Qwen2.5-7B", label: "Base model", sub: "Coder-Instruct" },
-              { stat: "CV Score", label: "Reward signal", sub: "Cross-validation improvement" },
-            ].map(({ stat, label, sub }) => {
-              const ref = useScrollReveal();
-              return (
-                <div
-                  key={label}
-                  ref={ref}
-                  className="reveal rounded-2xl border p-8"
-                  style={{ borderColor: `${ACCENT}20` }}
-                >
-                  <div className="text-3xl font-bold tracking-tight mb-2" style={{ color: ACCENT }}>{stat}</div>
-                  <div className="text-sm font-semibold text-gray-800 mb-1">{label}</div>
-                  <div className="text-xs text-gray-400">{sub}</div>
-                </div>
-              );
-            })}
+            <StatCard stat="800k" label="Training pairs" sub="280k notebooks + 50k writeups" />
+            <StatCard stat="Qwen2.5-7B" label="Base model" sub="Coder-Instruct" />
+            <StatCard stat="CV Score" label="Reward signal" sub="Cross-validation improvement" />
           </div>
         </div>
       </section>

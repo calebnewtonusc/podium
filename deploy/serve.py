@@ -4,6 +4,7 @@ Podium FastAPI server — REST + WebSocket interface for competition runs.
 
 import asyncio
 import json
+import os
 import uuid
 from pathlib import Path
 
@@ -13,8 +14,17 @@ from loguru import logger
 from pydantic import BaseModel
 
 app = FastAPI(title="Podium API", version="1.0.0")
+
+# Allow callers to expand origins via CORS_ORIGINS env var (comma-separated).
+# Defaults to localhost only so the wildcard is never used in production.
+_cors_env = os.environ.get("CORS_ORIGINS", "http://localhost:3000,http://localhost:8080")
+_cors_origins = [o.strip() for o in _cors_env.split(",") if o.strip()]
+
 app.add_middleware(
-    CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]
+    CORSMiddleware,
+    allow_origins=_cors_origins,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 
