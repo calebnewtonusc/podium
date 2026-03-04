@@ -1,0 +1,84 @@
+version: "3.9"
+
+services:
+  # Podium model server (vLLM)
+  podium-model:
+    image: vllm/vllm-openai:latest
+    command: >
+      --model /models/podium-7b-v1
+      --served-model-name podium
+      --tensor-parallel-size 1
+      --max-model-len 16384
+      --quantization gptq
+      --port 8001
+    volumes:
+      - ./checkpoints/dpo:/models/podium-7b-v1:ro
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - VLLM_API_KEY=${VLLM_API_KEY}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Podium API server (FastAPI)
+  podium-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      podium-model:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - VLLM_SYNTHESIS_URL=http://podium-model:8001/v1
+      - VLLM_API_KEY=${VLLM_API_KEY}
+      - REDIS_URL=redis://redis:6379
+      - KAGGLE_USERNAME=${KAGGLE_USERNAME}
+      - KAGGLE_KEY=${KAGGLE_KEY}
+    volumes:
+      - ./data:/app/data
+      - ./results:/app/results
+      - /var/run/docker.sock:/var/run/docker.sock  # For execution harness
+    restart: unless-stopped
+
+  # Redis (competition session state and solution cache)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  # Nginx reverse proxy
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./deploy/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - podium-api
+    restart: unless-stopped
+
+volumes:
+  redis_data:

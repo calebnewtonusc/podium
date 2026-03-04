@@ -1,0 +1,26 @@
+# Stage 3: Direct Preference Optimization config
+
+model:
+  model_name: "./checkpoints/rl"
+  output_dir: "./checkpoints/dpo"
+  torch_dtype: "bfloat16"
+
+dpo:
+  beta: 0.1                 # KL penalty coefficient
+  learning_rate: 5.0e-7
+  num_train_epochs: 1
+  per_device_train_batch_size: 1
+  gradient_accumulation_steps: 8
+  max_length: 8192
+  max_prompt_length: 2048
+  bf16: true
+  loss_type: "sigmoid"      # Standard DPO loss
+
+data:
+  preference_data_path: "./data/dpo/competition_preferences.jsonl"
+
+logging:
+  logging_steps: 10
+  save_steps: 100
+  report_to: "wandb"
+  run_name: "podium-dpo-v1"

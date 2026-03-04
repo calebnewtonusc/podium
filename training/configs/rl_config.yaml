@@ -1,0 +1,35 @@
+# Stage 2: CV-Verified RL (GRPO) config
+# The core technical novelty: CV score as verifiable reward signal
+
+model:
+  model_name: "./checkpoints/sft"
+  output_dir: "./checkpoints/rl"
+  torch_dtype: "bfloat16"
+
+grpo:
+  learning_rate: 5.0e-6
+  num_train_epochs: 1
+  per_device_train_batch_size: 1
+  gradient_accumulation_steps: 8
+  num_generations: 8        # Sample 8 solutions per prompt, reward best
+  max_new_tokens: 2048
+  temperature: 0.7
+  max_grad_norm: 0.1        # Tighter clipping for RL stability
+  bf16: true
+
+reward:
+  execution_timeout_s: 120
+  docker_image: "podium-execution:latest"
+  execution_workers: 4      # Parallel Docker containers
+  reward_floor: -1.0        # Penalty for failed execution
+  reward_soft_floor: -0.5   # Penalty for below-baseline score
+  reward_scale: 10.0        # Multiplier for score improvement delta
+
+data:
+  train_data_path: "./data/rl/competition_execution_tasks.jsonl"
+
+logging:
+  logging_steps: 10
+  save_steps: 100
+  report_to: "wandb"
+  run_name: "podium-rl-grpo-v1"

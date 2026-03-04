@@ -1,0 +1,42 @@
+# Training data (too large for git)
+data/*
+!data/.gitkeep
+
+# Model checkpoints
+checkpoints/*
+!checkpoints/.gitkeep
+
+# Results
+results/*
+!results/.gitkeep
+
+# Environment
+.env
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# macOS
+.DS_Store
+
+# Logs
+logs/
+*.log
+/tmp/
+
+# Docker volumes
+deploy/ssl/
+
+# ChromaDB (competition memory is local)
+data/competition_memory/chroma/

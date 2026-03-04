@@ -1,0 +1,32 @@
+# Execution sandbox for CV-RL reward computation
+# CPU-only: fast, lightweight, no GPU needed for CV scoring
+# Network disabled during execution for security
+
+FROM python:3.11-slim
+
+WORKDIR /workspace
+
+# Install ML packages (CPU-only builds for speed)
+RUN pip install --no-cache-dir \
+    scikit-learn==1.5.0 \
+    lightgbm==4.4.0 \
+    xgboost==2.1.0 \
+    catboost==1.2.5 \
+    pandas==2.2.0 \
+    numpy==1.26.0 \
+    scipy==1.13.0 \
+    optuna==3.6.0
+
+# PyTorch CPU (smaller image — GPU not needed for CV scoring)
+RUN pip install --no-cache-dir \
+    torch==2.3.0+cpu \
+    --index-url https://download.pytorch.org/whl/cpu
+
+# Execution runner
+COPY deploy/execution_runner.py /workspace/execution_runner.py
+
+# Run as non-root for security
+RUN useradd -m -u 1000 sandbox
+USER sandbox
+
+CMD ["python", "execution_runner.py"]

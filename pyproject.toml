@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "podium"
+version = "0.1.0"
+description = "First trained specialist model for winning Kaggle competitions"
+requires-python = ">=3.11"
+readme = "README.md"
+license = { text = "MIT" }
+
+[project.scripts]
+podium = "podium.pipeline:app"
+podium-compete = "podium.agents.competition_runner:main"
+podium-eval = "podium.evaluation.eval:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = [
+    "agents*",
+    "competition_types*",
+    "deploy*",
+    "discovery*",
+    "evaluation*",
+    "knowledge*",
+    "synthesis*",
+    "training*",
+    "validation*",
+]
+
+[tool.setuptools.package-data]
+"*" = ["*.yaml", "*.json", "*.sh"]
